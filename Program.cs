@@ -1,4 +1,5 @@
-﻿using ipk24chat_server.Common; // Ensure this namespace matches where ChatArgumentParser is located
+﻿using ipk24chat_server.Common;
+using ipk24chat_server.System; // Ensure this namespace matches where ChatArgumentParser is located
 
 namespace ipk24chat_server;
 
@@ -9,7 +10,7 @@ internal class Program
         try
         {
             // Parse the command line arguments
-            ChatArgumentParser parser = new ChatArgumentParser();
+            ArgumentParser parser = new ArgumentParser();
             parser.ParseArguments(args);
         }
         catch (ArgumentException ex)

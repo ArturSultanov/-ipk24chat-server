@@ -9,10 +9,10 @@ namespace ipk24chat_server.Common;
 public static class ChatUsers
 {
     // Assuming each user has a unique identifier, like a username or GUID
-    public static ConcurrentDictionary<string, ChatUser> ConnectedUsers = new ConcurrentDictionary<string, ChatUser>();
+    public static ConcurrentDictionary<string, AbstractChatUser> ConnectedUsers = new ConcurrentDictionary<string, AbstractChatUser>();
 
     // Adding a user
-    public static void AddUser(string key, ChatUser user)
+    public static void AddUser(string key, AbstractChatUser user)
     {
         ConnectedUsers.TryAdd(key, user);
     }
@@ -24,7 +24,7 @@ public static class ChatUsers
     }
 
     // Example of how to get a user if needed
-    public static bool TryGetUser(string key, out ChatUser user)
+    public static bool TryGetUser(string key, out AbstractChatUser user)
     {
         return ConnectedUsers.TryGetValue(key, out user);
     }

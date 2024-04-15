@@ -1,4 +1,5 @@
 using System.Text;
+using ipk24chat_server.Client;
 using ipk24chat_server.Common;
 
 namespace ipk24chat_server.Tcp;
@@ -7,16 +8,16 @@ public static class TcpPacker
 {
     
     // Transform TcpMessage object into bytes to be sent to client, according to the IPK24-chat protocol.
-    public static byte[] Pack(TcpMessage message)
+    public static byte[] Pack(ClientMessage message)
     {
         switch (message.Type)
         {
             case ChatProtocol.MessageType.Reply:
-                return PackReplyMessage((TcpReplyMessage)message);
+                return PackReplyMessage((ReplyMessage)message);
             case ChatProtocol.MessageType.Msg:
-                return PackMsgMessage((TcpMsgMessage)message);
+                return PackMsgMessage((MsgMessage)message);
             case ChatProtocol.MessageType.Err:
-                return PackErrMessage((TcpErrMessage)message);
+                return PackErrMessage((ErrMessage)message);
             case ChatProtocol.MessageType.Bye:
                 return PackByeMessage();
             default:
@@ -25,20 +26,20 @@ public static class TcpPacker
         }
     }
     
-    private static byte[] PackReplyMessage(TcpReplyMessage replyMessage)
+    private static byte[] PackReplyMessage(ReplyMessage replyMessage)
     {
         string resultText = replyMessage.Result == 0 ? "NOK" : "OK";
         string message = $"REPLY {resultText} IS {replyMessage.MessageContent}\r\n";
         return Encoding.UTF8.GetBytes(message);
     }
     
-    private static byte[] PackMsgMessage(TcpMsgMessage msgMessage)
+    private static byte[] PackMsgMessage(MsgMessage msgMessage)
     {
         string message = $"MSG FROM {msgMessage.DisplayName} IS {msgMessage.MessageContent}\r\n";
         return Encoding.UTF8.GetBytes(message);
     }
     
-    private static byte[] PackErrMessage(TcpErrMessage errMessage)
+    private static byte[] PackErrMessage(ErrMessage errMessage)
     {
         string message = $"ERR FROM {errMessage.DisplayName} IS {errMessage.MessageContent}\r\n";
         return Encoding.UTF8.GetBytes(message);
@@ -52,7 +53,7 @@ public static class TcpPacker
     
     
     // Transform string received from client into TcpMessage object, according to the IPK24-chat protocol.
-    public static TcpMessage Unpack(string message)
+    public static ClientMessage Unpack(string message)
         {
             if (message.StartsWith("AUTH"))
             {
@@ -72,7 +73,7 @@ public static class TcpPacker
             }
             else if (message.StartsWith("BYE"))
             {
-                return new TcpByeMessage();
+                return new ByeMessage();
             }
             else
             {
@@ -80,10 +81,10 @@ public static class TcpPacker
             }
         }
 
-        private static TcpAuthMessage ParseAuthMessage(string message)
+        private static AuthMessage ParseAuthMessage(string message)
         {
             var parts = message.Split(' ');
-            return new TcpAuthMessage
+            return new AuthMessage
             {
                 Username = parts[1],
                 DisplayName = parts[3],
@@ -91,30 +92,30 @@ public static class TcpPacker
             };
         }
 
-        private static TcpJoinMessage ParseJoinMessage(string message)
+        private static JoinMessage ParseJoinMessage(string message)
         {
             var parts = message.Split(' ');
-            return new TcpJoinMessage
+            return new JoinMessage
             {
                 ChannelId = parts[1],
                 DisplayName = parts[3]
             };
         }
 
-        private static TcpMsgMessage ParseMsgMessage(string message)
+        private static MsgMessage ParseMsgMessage(string message)
         {
             var parts = message.Split(new[] { "MSG FROM", "IS" }, StringSplitOptions.RemoveEmptyEntries);
-            return new TcpMsgMessage
+            return new MsgMessage
             {
                 DisplayName = parts[0].Trim(),
                 MessageContent = parts[1].Trim()
             };
         }
 
-        private static TcpErrMessage ParseErrMessage(string message)
+        private static ErrMessage ParseErrMessage(string message)
         {
             var parts = message.Split(new[] { "ERR FROM", "IS" }, StringSplitOptions.RemoveEmptyEntries);
-            return new TcpErrMessage
+            return new ErrMessage
             {
                 DisplayName = parts[0].Trim(),
                 MessageContent = parts[1].Trim()

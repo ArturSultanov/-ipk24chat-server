@@ -1,8 +1,9 @@
 using System.Net;
+using ipk24chat_server.Common;
 
-namespace ipk24chat_server.Common
+namespace ipk24chat_server.System
 {
-    public class ChatArgumentParser
+    public class ArgumentParser
     {
         public void ParseArguments(string[] args)
         {

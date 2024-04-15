@@ -1,22 +1,21 @@
-using System.Text;
 using ipk24chat_server.Common;
 
-namespace ipk24chat_server.Tcp;
+namespace ipk24chat_server.Client;
 
 
-public abstract class TcpMessage
+public abstract class ClientMessage
 {
     public byte Type { get; set; }
 }
 
-public class TcpAuthMessage : TcpMessage
+public class AuthMessage : ClientMessage
 {
     
     public string Username { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
     public string Secret { get; set; } = string.Empty;
     
-    public TcpAuthMessage()
+    public AuthMessage()
     {
         Type = ChatProtocol.MessageType.Auth;
     }
@@ -28,12 +27,12 @@ public class TcpAuthMessage : TcpMessage
     // }
 }
 
-public class TcpJoinMessage : TcpMessage
+public class JoinMessage : ClientMessage
 {
     public string ChannelId { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
     
-    public TcpJoinMessage()
+    public JoinMessage()
     {
         Type = ChatProtocol.MessageType.Join;
     }
@@ -45,12 +44,12 @@ public class TcpJoinMessage : TcpMessage
     // }
 }
 
-public class TcpMsgMessage : TcpMessage
+public class MsgMessage : ClientMessage
 {
     public string DisplayName { get; set; } = string.Empty;
     public string MessageContent { get; set; } = string.Empty;
     
-    public TcpMsgMessage()
+    public MsgMessage()
     {
         Type = ChatProtocol.MessageType.Msg;
     }
@@ -62,12 +61,12 @@ public class TcpMsgMessage : TcpMessage
     // }
 }
 
-public class TcpErrMessage : TcpMessage
+public class ErrMessage : ClientMessage
 {
     public string DisplayName { get; set; } = string.Empty;
     public string MessageContent { get; set; } = string.Empty;
     
-    public TcpErrMessage()
+    public ErrMessage()
     {
         Type = ChatProtocol.MessageType.Err;
     }
@@ -79,9 +78,9 @@ public class TcpErrMessage : TcpMessage
     // }
 }
 
-public class TcpByeMessage : TcpMessage
+public class ByeMessage : ClientMessage
 {
-    public TcpByeMessage()
+    public ByeMessage()
     {
         Type = ChatProtocol.MessageType.Bye;
     }
@@ -92,12 +91,12 @@ public class TcpByeMessage : TcpMessage
     // }
 }
 
-public class TcpReplyMessage : TcpMessage
+public class ReplyMessage : ClientMessage
 {
     public byte Result { get; set; }
     public string MessageContent { get; set; } = string.Empty;
     
-    public TcpReplyMessage()
+    public ReplyMessage()
     {
         Type = ChatProtocol.MessageType.Reply;
     }

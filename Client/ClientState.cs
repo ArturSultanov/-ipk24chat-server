@@ -1,6 +1,6 @@
-namespace ipk24chat_server.Common;
+namespace ipk24chat_server.Client;
 
-public static class ChatState
+public static class ClientState
 {
     public enum State
     {
