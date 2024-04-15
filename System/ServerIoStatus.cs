@@ -1,6 +1,6 @@
 namespace ipk24chat_server.System;
 
-public class ServerIOPrinter
+public class ServerIoStatus
 {
     public void PrintToStdout(string message)
     {

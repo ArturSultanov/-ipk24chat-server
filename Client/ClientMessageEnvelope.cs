@@ -5,7 +5,7 @@ namespace ipk24chat_server.Client;
 public class ClientMessageEnvelope
 {
     private AbstractChatUser _user;
-    private string _message = string.Empty;
+    private ClientMessage _message;
     
     public AbstractChatUser User
     {
@@ -13,13 +13,13 @@ public class ClientMessageEnvelope
         set { _user = value; }
     }
     
-    public string Message
+    public ClientMessage Message
     {
         get { return _message; }
         set { _message = value; }
     }
     
-    public ClientMessageEnvelope(AbstractChatUser user, string message)
+    public ClientMessageEnvelope(AbstractChatUser user, ClientMessage message)
     {
         User = user;
         Message = message;

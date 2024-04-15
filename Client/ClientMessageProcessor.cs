@@ -7,48 +7,75 @@ namespace ipk24chat_server.Client;
 public class ClientMessageProcessor
 {
     
+    // public async Task CheckMessageQueueAsync(CancellationToken cancellationToken, Action requestCancel)
+    // {
+    //     while (!cancellationToken.IsCancellationRequested)
+    //     {
+    //         ClientMessageEnvelope? envelope;
+    //
+    //         while (!ClientMessageQueue.Queue.TryDequeue(out envelope))
+    //         {
+    //             var cancellationTask = Task.Delay(Timeout.Infinite, cancellationToken);
+    //             var completedTask = await Task.WhenAny(ClientMessageTracker.MessageReceived.Task, cancellationTask);
+    //
+    //             if (completedTask == cancellationTask)
+    //             {
+    //                 if (!cancellationToken.IsCancellationRequested) requestCancel();
+    //                 break;
+    //             }
+    //
+    //             ClientMessageTracker.ResetMessageReceived();
+    //         }
+    //
+    //         if (envelope != null)
+    //         {
+    //             // Processing message from user
+    //             await ProcessClientMessageAsync(envelope, cancellationToken, requestCancel);
+    //         }
+    //     }
+    // }
+    
     public async Task CheckMessageQueueAsync(CancellationToken cancellationToken, Action requestCancel)
     {
-        while (!cancellationToken.IsCancellationRequested)
+        try
         {
-            ClientMessageEnvelope? envelope;
-
-            while (!ClientMessageQueue.Queue.TryDequeue(out envelope))
+            while (!cancellationToken.IsCancellationRequested)
             {
-                var cancellationTask = Task.Delay(Timeout.Infinite, cancellationToken);
-                var completedTask = await Task.WhenAny(ClientMessageTracker.MessageReceived.Task, cancellationTask);
-
-                if (completedTask == cancellationTask)
+                try
                 {
-                    if (!cancellationToken.IsCancellationRequested) requestCancel();
-                    break;
+                    // This will block until an item is available or the cancellation is triggered
+                    ClientMessageEnvelope envelope = ClientMessageQueue.Queue.Take(cancellationToken);
+                    await ProcessClientMessageAsync(envelope, cancellationToken, requestCancel);
                 }
-
-                ClientMessageTracker.ResetMessageReceived();
+                catch (OperationCanceledException)
+                {
+                    // Handle the cancellation of the blocking call gracefully
+                    if (!cancellationToken.IsCancellationRequested) requestCancel(); // Invoke requestCancel to handle cleanup or final operations
+                    Console.WriteLine("Message processing was canceled.");
+                    break; // Exit the loop on cancellation
+                }
             }
-
-            if (envelope != null)
-            {
-                // Processing message from user
-                await ProcessClientMessageAsync(envelope, cancellationToken, requestCancel);
-            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception in message processing: {ex.Message}");
+            // Handle or log the exception as needed
         }
     }
     
+    
     public async Task ProcessClientMessageAsync(ClientMessageEnvelope envelope, CancellationToken cancellationToken, Action requestCancel)
     {
-        string message = envelope.Message;
-
         switch (envelope.User)
         {
             case TcpChatUser tcpUser:
                 Console.WriteLine("Processing TCP user message");
-                await ProcessTcpUserMessage(tcpUser, message, cancellationToken);
+                await ProcessTcpUserMessage(tcpUser, envelope.Message, cancellationToken);
                 break;
 
             case UdpChatUser udpUser:
                 Console.WriteLine("Processing UDP user message");
-                await ProcessUdpUserMessage(udpUser, message, cancellationToken);
+                await ProcessUdpUserMessage(udpUser, envelope.Message, cancellationToken);
                 break;
 
             default:
@@ -58,13 +85,42 @@ public class ClientMessageProcessor
         }
     }
 
-    private async Task ProcessTcpUserMessage(TcpChatUser user, string message, CancellationToken cancellationToken)
+    private async Task ProcessTcpUserMessage(TcpChatUser user, ClientMessage message, CancellationToken cancellationToken)
     {
-        // Implement TCP-specific message processing logic
+        if (ChatUsers.TryGetUser(user.ConnectionKey, out _))
+        {
+            if (message is AuthMessage)
+            {
+                
+            }
+            else if (message is MsgMessage)
+            {
+                
+            }
+            else if (message is ErrMessage)
+            {
+                
+            }
+            else if (message is ByeMessage)
+            {
+                
+            }
+            else
+            {
+                // Send error message to the user
+                string response = "ERR Unknown message type\r\n";
+                await user.SendMessageAsync(response);
+            }
+            
+        }
+        else
+        {
+            Console.WriteLine("User not found in the connected users list.");
+        }
         Console.WriteLine($"TCP Message Processed: {message}");
     }
 
-    private async Task ProcessUdpUserMessage(UdpChatUser user, string message, CancellationToken cancellationToken)
+    private async Task ProcessUdpUserMessage(UdpChatUser user, ClientMessage message, CancellationToken cancellationToken)
     {
         // Implement UDP-specific message processing logic
         Console.WriteLine($"UDP Message Processed: {message}");
