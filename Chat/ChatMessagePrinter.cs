@@ -32,28 +32,44 @@ public class ChatMessagePrinter
     {
         // Upon user successfully joining to a channel the server is required to "broadcast" a message to all users connected to the channel, with display name Server and content {DisplayName} has joined {ChannelID}..
         var message = envelope.Message;
-        throw new NotImplementedException();
+        var user = envelope.User;
+
+        switch (message.Type)
+        {
+            case ChatProtocol.MessageType.Auth:
+                PrintAuthMessage(user, message);
+                break;
+            case ChatProtocol.MessageType.Join:
+                PrintJoinLeftMessage(user, message);
+                break;
+            case ChatProtocol.MessageType.Msg:
+                PrintTextMessage(user, message);
+                break;
+            case ChatProtocol.MessageType.Bye:
+                PrintLeaveMessage(user, message);
+                break;
+        }
+        
+        return Task.CompletedTask;
+    }
+    private void PrintAuthMessage(AbstractChatUser user, ClientMessage message) // All
+    {
         
     }
-    private void PrintAuthMessage(ClientMessageEnvelope envelope) // All
+    
+    private void PrintJoinLeftMessage(AbstractChatUser user, ClientMessage message)  // All
     {
         // Upon user successfully joining to a channel the server is required to "broadcast" a message to all users connected to the channel, with display name Server and content {DisplayName} has joined {ChannelID}..
         throw new NotImplementedException();
     }
     
-    private void PrintJoinMessage(ClientMessageEnvelope envelope) // All
-    {
-        // Upon user successfully joining to a channel the server is required to "broadcast" a message to all users connected to the channel, with display name Server and content {DisplayName} has joined {ChannelID}..
-        throw new NotImplementedException();
-    }
-    
-    private void PrintTextMessage(ClientMessageEnvelope envelope) // Except for the original sender
+    private void PrintTextMessage(AbstractChatUser user, ClientMessage message)  // Except for the original sender
     {
         // Upon user sending a message to a channel the server is required to "broadcast" a message to all users connected to the channel, with display name {DisplayName} and content {Content}..
         throw new NotImplementedException();
     }
     
-    private void PrintLeaveMessage(ClientMessageEnvelope envelope) // Except for the original sender
+    private void PrintLeaveMessage(AbstractChatUser user, ClientMessage message)  // Except for the original sender
     {
         // Upon user successfully leaving a channel the server is required to "broadcast" a message to all users connected to the channel, with display name Server and content {DisplayName} has left {ChannelID}..
         throw new NotImplementedException();

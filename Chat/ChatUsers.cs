@@ -5,7 +5,7 @@ namespace ipk24chat_server.Chat;
 public static class ChatUsers
 {
     // Assuming each user has a unique identifier, like a username or GUID
-    public static ConcurrentDictionary<string, AbstractChatUser> ConnectedUsers = new ConcurrentDictionary<string, AbstractChatUser>();
+    public static readonly ConcurrentDictionary<string, AbstractChatUser> ConnectedUsers = new ConcurrentDictionary<string, AbstractChatUser>();
 
     // Adding a user
     public static void AddUser(string key, AbstractChatUser user)

@@ -43,4 +43,10 @@ public class UdpChatUser : Chat.AbstractChatUser
     {
         UdpEndPoint = udpEndPoint;
     }
+    
+    override 
+    public async Task SendMessageAsync(ClientMessage message)
+    {
+    
+    }
 }

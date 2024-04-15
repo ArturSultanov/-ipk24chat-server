@@ -45,12 +45,13 @@ namespace ipk24chat_server.Tcp
             TcpClient = tcpClient;
         }
 
-        public async Task SendMessageAsync(string message)
+        override 
+        public async Task SendMessageAsync(ClientMessage message)
         {
             if (TcpClient.Connected)
             {
-                byte[] buffer = Encoding.UTF8.GetBytes(message);
-                await TcpClient.GetStream().WriteAsync(buffer, 0, buffer.Length);
+                byte[] byteMessage = TcpPacker.Pack(message);
+                await TcpClient.GetStream().WriteAsync(byteMessage, 0, byteMessage.Length);
             }
         }
     }

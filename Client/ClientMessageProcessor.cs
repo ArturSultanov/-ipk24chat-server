@@ -103,13 +103,14 @@ public class ClientMessageProcessor
             }
             else if (message is ByeMessage)
             {
+                ChatUsers.RemoveUser(user.ConnectionKey);
                 
             }
             else
             {
                 // Send error message to the user
                 string response = "ERR Unknown message type\r\n";
-                await user.SendMessageAsync(response);
+                await user.SendMessageAsync(new ErrMessage { DisplayName = "Server", MessageContent = response });
             }
             
         }
