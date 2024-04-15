@@ -1,8 +1,7 @@
-using System.Collections.Concurrent;
 using System.Net.Sockets;
 using System.Text;
 using ipk24chat_server.Client;
-using ipk24chat_server.Common;
+using ipk24chat_server.Chat;
 namespace ipk24chat_server.Tcp;
 
 public class TcpChatServer
@@ -145,7 +144,7 @@ public class TcpChatServer
         }
     }
 
-    private async Task ProcessReceivedData(StringBuilder messageBuilder, TcpChatUser user)
+    private Task ProcessReceivedData(StringBuilder messageBuilder, TcpChatUser user)
     {
         string messageData = messageBuilder.ToString();
         int lastNewLineIndex = messageData.LastIndexOf("\r\n");
@@ -167,9 +166,10 @@ public class TcpChatServer
                 messageBuilder.Append(messageData.Substring(lastNewLineIndex + 2));
             }
         }
+
+        return Task.CompletedTask;
     }
     
-    // HELPER METHODS
     private static string GenerateKeyFromTcpClient(TcpClient tcpClient)
     {
         return tcpClient.Client.RemoteEndPoint.ToString();

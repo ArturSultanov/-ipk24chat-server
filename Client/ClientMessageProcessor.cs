@@ -1,4 +1,4 @@
-using ipk24chat_server.Common;
+using ipk24chat_server.Chat;
 using ipk24chat_server.Tcp;
 using ipk24chat_server.Udp;
 

@@ -1,10 +1,10 @@
 using System.Net;
 using ipk24chat_server.Client;
-using ipk24chat_server.Common;
+using ipk24chat_server.Chat;
 
 namespace ipk24chat_server.Udp;
 
-public class UdpChatUser : Common.AbstractChatUser
+public class UdpChatUser : Chat.AbstractChatUser
 {
     private readonly object _lock = new object();
     public EndPoint UdpEndPoint { get; private set; }

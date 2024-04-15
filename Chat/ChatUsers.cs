@@ -1,10 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace ipk24chat_server.Common;
-// public static class ChatUsers
-// {
-//     public static ConcurrentBag<ChatUser> ConnectedUsers = new ConcurrentBag<ChatUser>();
-// }
+namespace ipk24chat_server.Chat;
 
 public static class ChatUsers
 {
@@ -24,7 +20,7 @@ public static class ChatUsers
     }
 
     // Example of how to get a user if needed
-    public static bool TryGetUser(string key, out AbstractChatUser user)
+    public static bool TryGetUser(string key, out AbstractChatUser? user)
     {
         return ConnectedUsers.TryGetValue(key, out user);
     }

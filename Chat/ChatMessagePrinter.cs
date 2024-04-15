@@ -1,6 +1,6 @@
 using ipk24chat_server.Client;
 
-namespace ipk24chat_server.Common;
+namespace ipk24chat_server.Chat;
 
 public class ChatMessagePrinter
 {
@@ -23,6 +23,7 @@ public class ChatMessagePrinter
         }
         finally
         {
+            // Release resources
             ChatMessagesQueue.Queue.Dispose();
         }
     }

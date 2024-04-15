@@ -1,4 +1,4 @@
-﻿using ipk24chat_server.Common;
+﻿using ipk24chat_server.Chat;
 using ipk24chat_server.System; // Ensure this namespace matches where ChatArgumentParser is located
 
 namespace ipk24chat_server;

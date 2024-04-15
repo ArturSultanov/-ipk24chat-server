@@ -1,6 +1,6 @@
 using System.Net;
 
-namespace ipk24chat_server.Common;
+namespace ipk24chat_server.Chat;
 
 public static class ChatSettings
 {

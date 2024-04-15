@@ -1,14 +1,11 @@
-using System;
 using System.Text;
 using System.Net.Sockets;
-using System.Threading.Tasks;
 using ipk24chat_server.Client;
-using ipk24chat_server.Common;
 
 namespace ipk24chat_server.Tcp
 {
     // Represents the Tcp chat user
-    public class TcpChatUser : Common.AbstractChatUser
+    public class TcpChatUser : Chat.AbstractChatUser
     {
         private readonly object _lock = new object();
         public TcpClient TcpClient { get; private set; }

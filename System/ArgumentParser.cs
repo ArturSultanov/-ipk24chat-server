@@ -1,5 +1,5 @@
 using System.Net;
-using ipk24chat_server.Common;
+using ipk24chat_server.Chat;
 
 namespace ipk24chat_server.System
 {
