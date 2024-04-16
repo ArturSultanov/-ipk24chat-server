@@ -87,35 +87,119 @@ public class ClientMessageProcessor
 
     private async Task ProcessTcpUserMessage(TcpChatUser user, ClientMessage message, CancellationToken cancellationToken)
     {
-        if (ChatUsers.TryGetUser(user.ConnectionKey, out _))
+        if (ChatUsers.TryGetUser(user.ConnectionEndPoint, out _))
         {
-            if (message is AuthMessage)
+            if (message is AuthMessage authMessage && user.State == ClientState.State.Start)
             {
+                // TODO: check already existing users with the same login
+                
+                // Update the user info
+                user.Username = authMessage.Username;
+                user.DisplayName = authMessage.DisplayName;
+                user.Secret = authMessage.Secret;
+                user.State = ClientState.State.Open;
+                
+                // By default, any combination of a valid Username, DisplayName and Secret will be authenticated successfully.
+                var positiveReply = new ReplyMessage
+                {
+                    Result = 1,
+                    MessageContent = "Successfully authenticated"
+                };
+                _ = Task.Run(() => user.SendMessageAsync(positiveReply), cancellationToken);
+                
+                // Add the message to the queue to be printed in the chat
+                var printMessage = new MsgMessage
+                {
+                    DisplayName = "Server",
+                    MessageContent = $"{user.DisplayName} has joined {user.ChannelId}"
+                };
+                ChatMessagesQueue.Queue.Add(new ChatMessage(user, user.ChannelId ,printMessage), cancellationToken);
                 
             }
-            else if (message is MsgMessage)
+            else if (message is MsgMessage msgMessage && user.State != ClientState.State.Start)
             {
+                ChatMessagesQueue.Queue.Add(new ChatMessage(null, user.ChannelId ,msgMessage), cancellationToken);
+            }
+            else if(message is JoinMessage joinMessage && user.State != ClientState.State.Start)
+            {
+                var leftChannelMessage = new MsgMessage
+                {
+                    DisplayName = "Server",
+                    MessageContent = $"{user.DisplayName} has left {user.ChannelId}"
+                };
+                ChatMessagesQueue.Queue.Add(new ChatMessage(user, user.ChannelId ,leftChannelMessage), cancellationToken);
                 
+                user.ChannelId = joinMessage.ChannelId;
+                
+                var joinedChannelMessage = new MsgMessage
+                {
+                    DisplayName = "Server",
+                    MessageContent = $"{user.DisplayName} has joined {user.ChannelId}"
+                };
+                ChatMessagesQueue.Queue.Add(new ChatMessage(null, user.ChannelId ,joinedChannelMessage), cancellationToken);
+                
+                var positiveReply = new ReplyMessage
+                {
+                    Result = 1,
+                    MessageContent = "Successfully authenticated"
+                };
+                _ = Task.Run(() => user.SendMessageAsync(positiveReply), cancellationToken);
             }
             else if (message is ErrMessage)
             {
+                // user.State = ClientState.State.Error;
+                _ = Task.Run(() => user.SendMessageAsync(new ByeMessage()), cancellationToken);
+                ChatUsers.RemoveUser(user.ConnectionEndPoint);
                 
+                var leftChannelMessage = new MsgMessage
+                {
+                    DisplayName = "Server",
+                    MessageContent = $"{user.DisplayName} has left {user.ChannelId}"
+                };
+                ChatMessagesQueue.Queue.Add(new ChatMessage(null, user.ChannelId ,leftChannelMessage), cancellationToken);
+                user.TcpClient.Close();
             }
             else if (message is ByeMessage)
             {
-                ChatUsers.RemoveUser(user.ConnectionKey);
-                
+                ChatUsers.RemoveUser(user.ConnectionEndPoint);
+                var leftChannelMessage = new MsgMessage
+                {
+                    DisplayName = "Server",
+                    MessageContent = $"{user.DisplayName} has left {user.ChannelId}"
+                };
+                ChatMessagesQueue.Queue.Add(new ChatMessage(null, user.ChannelId ,leftChannelMessage), cancellationToken);
+                user.TcpClient.Close();
             }
             else
             {
-                // Send error message to the user
-                string response = "ERR Unknown message type\r\n";
-                await user.SendMessageAsync(new ErrMessage { DisplayName = "Server", MessageContent = response });
+                // Send error message, send bye and remove the user
+                var errorMessage = new ErrMessage
+                {
+                    DisplayName = "Server",
+                    MessageContent = "Invalid message"
+                };
+                _ = Task.Run(() => user.SendMessageAsync(errorMessage), cancellationToken);
+                if (user.State != ClientState.State.Start)
+                {
+                    _ = Task.Run(() => user.SendMessageAsync(new ByeMessage()), cancellationToken);
+                    ChatUsers.RemoveUser(user.ConnectionEndPoint);
+                    
+                    var leftChannelMessage = new MsgMessage
+                    {
+                        DisplayName = "Server",
+                        MessageContent = $"{user.DisplayName} has left {user.ChannelId}"
+                    };
+                    ChatMessagesQueue.Queue.Add(new ChatMessage(null, user.ChannelId ,leftChannelMessage), cancellationToken);
+                    
+                }
+                
+                user.TcpClient.Close();
             }
             
         }
         else
         {
+            
             Console.WriteLine("User not found in the connected users list.");
         }
         Console.WriteLine($"TCP Message Processed: {message}");

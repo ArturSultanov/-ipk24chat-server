@@ -38,8 +38,8 @@ public class UdpChatUser : Chat.AbstractChatUser
     }
 
     // Constructor
-    public UdpChatUser(EndPoint udpEndPoint, string key)
-        : base(key) // Passing key to the base class constructor
+    public UdpChatUser(EndPoint udpEndPoint, EndPoint endPoint)
+        : base(endPoint) // Passing key to the base class constructor
     {
         UdpEndPoint = udpEndPoint;
     }

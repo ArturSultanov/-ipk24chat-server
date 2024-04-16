@@ -1,27 +1,30 @@
 using System.Collections.Concurrent;
+using System.Net;
 
 namespace ipk24chat_server.Chat;
 
 public static class ChatUsers
 {
     // Assuming each user has a unique identifier, like a username or GUID
-    public static readonly ConcurrentDictionary<string, AbstractChatUser> ConnectedUsers = new ConcurrentDictionary<string, AbstractChatUser>();
+    public static readonly ConcurrentDictionary<EndPoint, AbstractChatUser> ConnectedUsers = new ConcurrentDictionary<EndPoint, AbstractChatUser>();
+    
+    
 
     // Adding a user
-    public static void AddUser(string key, AbstractChatUser user)
+    public static void AddUser(EndPoint endPoint, AbstractChatUser user)
     {
-        ConnectedUsers.TryAdd(key, user);
+        ConnectedUsers.TryAdd(endPoint, user);
     }
 
     // Removing a user
-    public static bool RemoveUser(string key)
+    public static bool RemoveUser(EndPoint endPoint)
     {
-        return ConnectedUsers.TryRemove(key, out _);
+        return ConnectedUsers.TryRemove(endPoint, out _);
     }
 
     // Example of how to get a user if needed
-    public static bool TryGetUser(string key, out AbstractChatUser? user)
+    public static bool TryGetUser(EndPoint endPoint, out AbstractChatUser? user)
     {
-        return ConnectedUsers.TryGetValue(key, out user);
+        return ConnectedUsers.TryGetValue(endPoint, out user);
     }
 }

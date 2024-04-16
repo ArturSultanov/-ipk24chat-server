@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using ipk24chat_server.Client;
@@ -19,10 +20,10 @@ public class TcpChatServer
                 var tcpClient = await _listener.AcceptTcpClientAsync(cancellationToken);
                 
                 // Create a new user object for the connected client
-                var user = new TcpChatUser(GenerateKeyFromTcpClient(tcpClient), tcpClient);
+                var user = new TcpChatUser(tcpClient.Client.RemoteEndPoint, tcpClient);
                 
                 // Add the user to the connected users dictionary
-                ChatUsers.ConnectedUsers.TryAdd(user.ConnectionKey, user);
+                ChatUsers.ConnectedUsers.TryAdd(user.ConnectionEndPoint, user);
                 
                 // Handle the connection in a separate task
                 _ = Task.Run(() => ListenClientAsync(user, cancellationToken));
@@ -140,7 +141,7 @@ public class TcpChatServer
         {
             user.TcpClient.Close();
             // Removing the user from the dictionary
-            ChatUsers.ConnectedUsers.TryRemove(user.ConnectionKey, out _);
+            ChatUsers.ConnectedUsers.TryRemove(user.ConnectionEndPoint, out _);
         }
     }
 
@@ -170,10 +171,6 @@ public class TcpChatServer
         return Task.CompletedTask;
     }
     
-    private static string GenerateKeyFromTcpClient(TcpClient tcpClient)
-    {
-        return tcpClient.Client.RemoteEndPoint.ToString();
-    }
     
     private ClientMessageEnvelope MessageToEnvelope(TcpChatUser user, ClientMessage message)
     {

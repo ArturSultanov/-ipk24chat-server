@@ -21,8 +21,8 @@ public class ClientMessageEnvelope
     
     public ClientMessageEnvelope(AbstractChatUser user, ClientMessage message)
     {
-        User = user;
-        Message = message;
+        _user = user;
+        _message = message;
     }
     
 }

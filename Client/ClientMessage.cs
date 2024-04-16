@@ -8,6 +8,14 @@ public abstract class ClientMessage
     public byte Type { get; set; }
 }
 
+public class ConfirmMessage : ClientMessage
+{
+    public ConfirmMessage()
+    {
+        Type = ChatProtocol.MessageType.Confirm;
+    }
+}
+
 public class AuthMessage : ClientMessage
 {
     
