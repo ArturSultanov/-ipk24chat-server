@@ -19,7 +19,15 @@ public static class ChatUsers
     // Removing a user
     public static bool RemoveUser(EndPoint endPoint)
     {
-        return ConnectedUsers.TryRemove(endPoint, out _);
+        try
+        {
+            return ConnectedUsers.TryRemove(endPoint, out _);
+        }
+        catch (Exception)
+        {
+            return true;
+        }
+        
     }
 
     // Example of how to get a user if needed
@@ -27,4 +35,5 @@ public static class ChatUsers
     {
         return ConnectedUsers.TryGetValue(endPoint, out user);
     }
+    
 }
