@@ -6,14 +6,14 @@ namespace ipk24chat_server.Udp;
 
 public class UdpUser : AbstractChatUser
 {
-
+    // last message id from client
+    // last message id from server
+    // list of confirm waiting messages
 
     // Constructor
-    public UdpUser(EndPoint endPoint)
-        : base(endPoint) // Passing key to the base class constructor
-    {
-        
-    }
+    public UdpUser(EndPoint endPoint) : base(endPoint){} // Passing key to the base class constructor
+
+    private ushort _lastMessageId = 0;
     
     override 
     public async Task SendMessageAsync(ClientMessage message)
@@ -26,5 +26,10 @@ public class UdpUser : AbstractChatUser
     {
         await Task.Delay(10);
         throw new NotImplementedException();
+    }
+
+    public override ushort? LastMessageId()
+    {
+        return _lastMessageId++;
     }
 }
