@@ -2,20 +2,20 @@ using ipk24chat_server.Chat;
 
 namespace ipk24chat_server.Client;
 
-// ClientMessage is the base class for all messages that can be sent
+// ClientMessage is the base class for all messages that can be sent/receive from/to the client to/from the server
 public abstract class ClientMessage
 {
-    public byte Type { get; set; }
+    public byte Type { get; protected init; }
+    public ushort? MessageId { get; set; } // Used for Udp only, save the message id
 }
 
 // ConfirmMessage is a message that confirms that the message was received (Udp only)
 public class ConfirmMessage : ClientMessage
 {
-    public ushort RefMessageId { get; init;}
-    public ConfirmMessage(ushort refMessageId)
+    public ConfirmMessage(ushort? refMessageId)
     {
         Type = ChatProtocol.MessageType.Confirm;
-        RefMessageId = refMessageId;
+        MessageId = refMessageId;
     }
 
 }
@@ -23,10 +23,10 @@ public class ConfirmMessage : ClientMessage
 // AuthMessage is an initial message that is sent to authenticate the user
 public class AuthMessage: ClientMessage
 {
+    public string Username { get; }
+    public string DisplayName { get; }
+    public string Secret { get; }
     
-    public string Username { get; init;}
-    public string DisplayName { get; init;}
-    public string Secret { get; init;}
     
     public AuthMessage(string username, string displayName, string secret)
     {
@@ -40,10 +40,10 @@ public class AuthMessage: ClientMessage
 // JoinMessage is a message that is sent when the user joins a channel
 public class JoinMessage : ClientMessage
 {
-    public string ChannelId { get; init;}
-    public string DisplayName { get; init;}
+    public string ChannelId { get; }
+    public string DisplayName { get; }
     
-    public JoinMessage( string channelId, string displayName)
+    public JoinMessage(string channelId, string displayName)
     {
         Type = ChatProtocol.MessageType.Join;
         ChannelId = channelId;
@@ -54,8 +54,8 @@ public class JoinMessage : ClientMessage
 // MsgMessage is a message that is sent when the user sends a text message
 public class MsgMessage : ClientMessage
 {
-    public string DisplayName { get; init;}
-    public string MessageContent { get; init;}
+    public string DisplayName { get; }
+    public string MessageContent { get; }
     
     public MsgMessage(string displayName, string messageContent)
     {
@@ -68,8 +68,8 @@ public class MsgMessage : ClientMessage
 // ErrMessage is a message that is sent when an error occurs
 public class ErrMessage : ClientMessage
 {
-    public string DisplayName { get; init; }
-    public string MessageContent { get; init; }
+    public string DisplayName { get;  }
+    public string MessageContent { get;  }
     
     public ErrMessage(string displayName, string messageContent)
     {
@@ -91,13 +91,16 @@ public class ByeMessage : ClientMessage
 // ReplyMessage is a message that is sent as a result to any action
 public class ReplyMessage : ClientMessage
 {
-    public byte Result { get; init;}
-    public string MessageContent { get; init;}
+    public byte Result { get; }
+    public string MessageContent { get; }
+
+    public ushort? RefMessageId { get; }  // For Udp only
     
-    public ReplyMessage(byte result, string messageContent)
+    public ReplyMessage(byte result, string messageContent, ushort? refMessageId)
     {
         Result = result;
         MessageContent = messageContent;
         Type = ChatProtocol.MessageType.Reply;
+        RefMessageId = refMessageId; // Udp only
     }
 }

@@ -19,33 +19,45 @@ namespace ipk24chat_server.Tcp
         
         public override async Task SendMessageAsync(ClientMessage message)
         {
-            if (TcpClient.Connected)
+            try
             {
-                Logger.LogIo("SENT", ConnectionEndPoint.ToString(), message);
-                byte[] byteMessage = TcpPacker.Pack(message);
-                await TcpClient.GetStream().WriteAsync(byteMessage, 0, byteMessage.Length);
+                if (TcpClient.Connected)
+                {
+                    Logger.LogIo("SENT", ConnectionEndPoint.ToString(), message);
+                    byte[] byteMessage = TcpPacker.Pack(message);
+                    await TcpClient.GetStream().WriteAsync(byteMessage, 0, byteMessage.Length);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine($"Error sending message to {ConnectionEndPoint}: {e.Message}");
+                throw;
             }
         }
         public override Task ClientDisconnect()
         {
             try
             {
-                // Remove user from connected user list
-                ChatUsers.RemoveUser(ConnectionEndPoint);
-                
-                // Shut down the connection gracefully.
                 if (TcpClient.Connected)
                 {
-                    TcpClient.GetStream().Close(); // Close the network stream
-                    TcpClient.Close(); // Close the TcpClient
+                    TcpClient.GetStream().Close();
+                    TcpClient.Close();
                 }
+                ChatUsers.RemoveUser(ConnectionEndPoint);
             }
-            catch (Exception e)
+            catch (ArgumentNullException )
             {
-                Console.WriteLine($"Error closing TcpClient: {e.Message}");
+                // Exception can be causes by RemoveUser when the user is already removed, or had not been added.
+                // Ignore exception if the client is already disconnected.
             }
 
             return Task.CompletedTask;
+        }
+
+        
+        public override ushort? LastMessageId()
+        {
+            return null;
         }
     }
 }
