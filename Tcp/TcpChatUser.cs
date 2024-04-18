@@ -3,6 +3,7 @@ using System.Text;
 using System.Net.Sockets;
 using ipk24chat_server.Chat;
 using ipk24chat_server.Client;
+using ipk24chat_server.System;
 
 namespace ipk24chat_server.Tcp
 {
@@ -21,6 +22,7 @@ namespace ipk24chat_server.Tcp
         {
             if (TcpClient.Connected)
             {
+                Logger.LogIo("SENT", ConnectionEndPoint.ToString(), message);
                 byte[] byteMessage = TcpPacker.Pack(message);
                 await TcpClient.GetStream().WriteAsync(byteMessage, 0, byteMessage.Length);
             }

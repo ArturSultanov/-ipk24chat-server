@@ -1,11 +1,15 @@
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using ipk24chat_server.Client;
 using ipk24chat_server.Chat;
+using ipk24chat_server.System;
+
 namespace ipk24chat_server.Tcp;
 
-public class TcpChatServer
+public class TcpChatServer()
 {
+    private bool _stopServer = false;
     
     private TcpListener _listener = new TcpListener(ChatSettings.ServerIp, ChatSettings.ServerPort);
 
@@ -14,7 +18,7 @@ public class TcpChatServer
         _listener.Start();
         try
         {
-            while (!cancellationToken.IsCancellationRequested)
+            while (!_stopServer)
             {
                 // Wait for a client to connect
                 var tcpClient = await _listener.AcceptTcpClientAsync(cancellationToken);
@@ -166,7 +170,10 @@ public class TcpChatServer
 
             foreach (var message in messages)
             {
-                ClientMessageQueue.Queue.Add(MessageToEnvelope(user, TcpPacker.Unpack(message)));
+                ClientMessage clientMessage = TcpPacker.Unpack(message);
+                Logger.LogIo("RECV", user.ConnectionEndPoint.ToString(), clientMessage);
+                // Further processing of received data
+                ClientMessageQueue.Queue.Add(MessageToEnvelope(user, clientMessage));
             }
 
             // Preserve incomplete message for next read
@@ -184,6 +191,11 @@ public class TcpChatServer
     private ClientMessageEnvelope MessageToEnvelope(TcpChatUser user, ClientMessage message)
     {
         return new ClientMessageEnvelope(user, message);
+    }
+
+    public void Stop()
+    {
+        _stopServer = true;
     }
     
 }

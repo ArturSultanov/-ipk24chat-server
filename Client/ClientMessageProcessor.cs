@@ -68,8 +68,8 @@ public class ClientMessageProcessor
         // Check user state and type of message before processing
         if (!ChatUsers.TryGetUser(envelope.User.ConnectionEndPoint, out var user)|| user == null)
         {
-            Console.WriteLine("User not found.");
-            return;
+            Console.WriteLine("User not found."); 
+            return; // The user has been disconnected or removed.
         }
 
         switch (envelope.Message)

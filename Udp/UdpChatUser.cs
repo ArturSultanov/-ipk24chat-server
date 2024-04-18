@@ -18,11 +18,13 @@ public class UdpChatUser : Chat.AbstractChatUser
     override 
     public async Task SendMessageAsync(ClientMessage message)
     {
+        await Task.Delay(10);
         throw new NotImplementedException();
     }
 
     public override async Task ClientDisconnect()
     {
+        await Task.Delay(10);
         throw new NotImplementedException();
     }
 }
