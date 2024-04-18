@@ -1,5 +1,4 @@
 using System.Net;
-using System.Text;
 using System.Net.Sockets;
 using ipk24chat_server.Chat;
 using ipk24chat_server.Client;
@@ -8,12 +7,12 @@ using ipk24chat_server.System;
 namespace ipk24chat_server.Tcp
 {
     // Represents the Tcp chat user
-    public class TcpChatUser : Chat.AbstractChatUser
+    public class TcpUser : AbstractChatUser
     {
         public TcpClient TcpClient { get; private set; }
 
         // Constructor
-        public TcpChatUser(EndPoint endPoint, TcpClient tcpClient) : base(endPoint)
+        public TcpUser(EndPoint endPoint, TcpClient tcpClient) : base(endPoint)
         {
             TcpClient = tcpClient;
         }

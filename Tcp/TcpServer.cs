@@ -7,7 +7,7 @@ using ipk24chat_server.System;
 
 namespace ipk24chat_server.Tcp;
 
-public class TcpChatServer()
+public class TcpServer()
 {
     private bool _stopServer = false;
     
@@ -32,7 +32,7 @@ public class TcpChatServer()
                 }
                 
                 // Create a new user object for the connected client
-                var user = new TcpChatUser(tcpClient.Client.RemoteEndPoint, tcpClient);
+                var user = new TcpUser(tcpClient.Client.RemoteEndPoint, tcpClient);
                 
                 // Add the user to the connected users dictionary
                 ChatUsers.AddUser(user.ConnectionEndPoint, user);
@@ -117,7 +117,7 @@ public class TcpChatServer()
     // Call the ProcessClientMessagesAsync method to process the messages
     
     
-    private async Task ListenClientAsync(TcpChatUser user, CancellationToken cancellationToken)
+    private async Task ListenClientAsync(TcpUser user, CancellationToken cancellationToken)
     {
         try
         {
@@ -157,7 +157,7 @@ public class TcpChatServer()
         }
     }
 
-    private Task ProcessReceivedData(StringBuilder messageBuilder, TcpChatUser user)
+    private Task ProcessReceivedData(StringBuilder messageBuilder, TcpUser user)
     {
         string messageData = messageBuilder.ToString();
         int lastNewLineIndex = messageData.LastIndexOf("\r\n", StringComparison.Ordinal);
@@ -188,7 +188,7 @@ public class TcpChatServer()
     }
     
     
-    private ClientMessageEnvelope MessageToEnvelope(TcpChatUser user, ClientMessage message)
+    private ClientMessageEnvelope MessageToEnvelope(TcpUser user, ClientMessage message)
     {
         return new ClientMessageEnvelope(user, message);
     }

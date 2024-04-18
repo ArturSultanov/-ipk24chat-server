@@ -41,14 +41,14 @@ internal class Program
     public static async Task Main(string[] args)
     {
         CancellationTokenSource cts = new CancellationTokenSource();
-        TcpChatServer? tcpServer = null;
+        TcpServer? tcpServer = null;
 
         try
         {
             ArgumentParser parser = new ArgumentParser();
             parser.ParseArguments(args);
 
-            tcpServer = new TcpChatServer();
+            tcpServer = new TcpServer();
 
             Console.CancelKeyPress += (_, e) => {
                 e.Cancel = true;

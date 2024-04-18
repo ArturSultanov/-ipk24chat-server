@@ -4,12 +4,12 @@ using ipk24chat_server.Chat;
 
 namespace ipk24chat_server.Udp;
 
-public class UdpChatUser : Chat.AbstractChatUser
+public class UdpUser : AbstractChatUser
 {
 
 
     // Constructor
-    public UdpChatUser(EndPoint endPoint)
+    public UdpUser(EndPoint endPoint)
         : base(endPoint) // Passing key to the base class constructor
     {
         
