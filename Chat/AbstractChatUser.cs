@@ -47,4 +47,5 @@ public abstract class AbstractChatUser(EndPoint endPoint)
     }
     
     public abstract Task SendMessageAsync(ClientMessage message); // Abstract method to send message to the user
+    public abstract Task ClientDisconnect(); // Abstract method to close the client
 }

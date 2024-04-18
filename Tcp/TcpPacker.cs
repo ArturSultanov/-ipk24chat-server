@@ -84,41 +84,25 @@ public static class TcpPacker
         private static AuthMessage ParseAuthMessage(string message)
         {
             var parts = message.Split(' ');
-            return new AuthMessage
-            {
-                Username = parts[1],
-                DisplayName = parts[3],
-                Secret = parts[5]
-            };
+            return new AuthMessage(parts[1], parts[3], parts[5]);
         }
 
         private static JoinMessage ParseJoinMessage(string message)
         {
             var parts = message.Split(' ');
-            return new JoinMessage
-            {
-                ChannelId = parts[1],
-                DisplayName = parts[3]
-            };
+            return new JoinMessage(parts[1], parts[3]);
         }
 
         private static MsgMessage ParseMsgMessage(string message)
         {
             var parts = message.Split(new[] { "MSG FROM", "IS" }, StringSplitOptions.RemoveEmptyEntries);
-            return new MsgMessage
-            {
-                DisplayName = parts[0].Trim(),
-                MessageContent = parts[1].Trim()
-            };
+            return new MsgMessage(parts[0].Trim(), parts[1].Trim());
+            
         }
 
         private static ErrMessage ParseErrMessage(string message)
         {
             var parts = message.Split(new[] { "ERR FROM", "IS" }, StringSplitOptions.RemoveEmptyEntries);
-            return new ErrMessage
-            {
-                DisplayName = parts[0].Trim(),
-                MessageContent = parts[1].Trim()
-            };
+            return new ErrMessage(parts[0].Trim(), parts[1].Trim());
         }
 }

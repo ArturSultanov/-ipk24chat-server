@@ -63,151 +63,109 @@ public class ClientMessageProcessor
         }
     }
     
-    
     public async Task ProcessClientMessageAsync(ClientMessageEnvelope envelope, CancellationToken cancellationToken, Action requestCancel)
     {
-        switch (envelope.User)
+        // Check user state and type of message before processing
+        if (!ChatUsers.TryGetUser(envelope.User.ConnectionEndPoint, out var user)|| user == null)
         {
-            case TcpChatUser tcpUser:
-                Console.WriteLine("Processing TCP user message");
-                await ProcessTcpUserMessage(tcpUser, envelope.Message, cancellationToken);
-                break;
+            Console.WriteLine("User not found.");
+            return;
+        }
 
-            case UdpChatUser udpUser:
-                Console.WriteLine("Processing UDP user message");
-                await ProcessUdpUserMessage(udpUser, envelope.Message, cancellationToken);
+        switch (envelope.Message)
+        {
+            case AuthMessage authMessage when user.State == ClientState.State.Start:
+                await HandleAuthMessage(user, authMessage, cancellationToken);
                 break;
-
+            case MsgMessage msgMessage when user.State == ClientState.State.Open:
+                await HandleMsgMessage(user, msgMessage, cancellationToken);
+                break;
+            case JoinMessage joinMessage when user.State == ClientState.State.Open:
+                await HandleJoinMessage(user, joinMessage, cancellationToken);
+                break;
+            case ErrMessage:
+                await HandleErrMessage(user, cancellationToken);
+                break;
+            case ByeMessage:
+                await HandleByeMessage(user, cancellationToken);
+                break;
+            // case ConfirmMessage confirmMessage:
+            //     await HandleConfirmMessage(user);
+            //     break;
             default:
-                requestCancel.Invoke();
-                Console.WriteLine("Unknown user type encountered.");
+                await HandleUnknownMessage(user, cancellationToken);
                 break;
         }
     }
 
-    private async Task ProcessTcpUserMessage(TcpChatUser user, ClientMessage message, CancellationToken cancellationToken)
+    private Task HandleAuthMessage(AbstractChatUser user, AuthMessage authMessage, CancellationToken cancellationToken)
     {
-        if (ChatUsers.TryGetUser(user.ConnectionEndPoint, out _))
-        {
-            if (message is AuthMessage authMessage && user.State == ClientState.State.Start)
-            {
-                // TODO: check already existing users with the same login
-                
-                // Update the user info
-                user.Username = authMessage.Username;
-                user.DisplayName = authMessage.DisplayName;
-                user.Secret = authMessage.Secret;
-                user.State = ClientState.State.Open;
-                
-                // By default, any combination of a valid Username, DisplayName and Secret will be authenticated successfully.
-                var positiveReply = new ReplyMessage
-                {
-                    Result = 1,
-                    MessageContent = "Successfully authenticated"
-                };
-                _ = Task.Run(() => user.SendMessageAsync(positiveReply), cancellationToken);
-                
-                // Add the message to the queue to be printed in the chat
-                var printMessage = new MsgMessage
-                {
-                    DisplayName = "Server",
-                    MessageContent = $"{user.DisplayName} has joined {user.ChannelId}"
-                };
-                ChatMessagesQueue.Queue.Add(new ChatMessage(user, user.ChannelId ,printMessage), cancellationToken);
-                
-            }
-            else if (message is MsgMessage msgMessage && user.State != ClientState.State.Start)
-            {
-                ChatMessagesQueue.Queue.Add(new ChatMessage(null, user.ChannelId ,msgMessage), cancellationToken);
-            }
-            else if(message is JoinMessage joinMessage && user.State != ClientState.State.Start)
-            {
-                var leftChannelMessage = new MsgMessage
-                {
-                    DisplayName = "Server",
-                    MessageContent = $"{user.DisplayName} has left {user.ChannelId}"
-                };
-                ChatMessagesQueue.Queue.Add(new ChatMessage(user, user.ChannelId ,leftChannelMessage), cancellationToken);
-                
-                user.ChannelId = joinMessage.ChannelId;
-                
-                var joinedChannelMessage = new MsgMessage
-                {
-                    DisplayName = "Server",
-                    MessageContent = $"{user.DisplayName} has joined {user.ChannelId}"
-                };
-                ChatMessagesQueue.Queue.Add(new ChatMessage(null, user.ChannelId ,joinedChannelMessage), cancellationToken);
-                
-                var positiveReply = new ReplyMessage
-                {
-                    Result = 1,
-                    MessageContent = "Successfully authenticated"
-                };
-                _ = Task.Run(() => user.SendMessageAsync(positiveReply), cancellationToken);
-            }
-            else if (message is ErrMessage)
-            {
-                // user.State = ClientState.State.Error;
-                _ = Task.Run(() => user.SendMessageAsync(new ByeMessage()), cancellationToken);
-                ChatUsers.RemoveUser(user.ConnectionEndPoint);
-                
-                var leftChannelMessage = new MsgMessage
-                {
-                    DisplayName = "Server",
-                    MessageContent = $"{user.DisplayName} has left {user.ChannelId}"
-                };
-                ChatMessagesQueue.Queue.Add(new ChatMessage(null, user.ChannelId ,leftChannelMessage), cancellationToken);
-                user.TcpClient.Close();
-            }
-            else if (message is ByeMessage)
-            {
-                ChatUsers.RemoveUser(user.ConnectionEndPoint);
-                var leftChannelMessage = new MsgMessage
-                {
-                    DisplayName = "Server",
-                    MessageContent = $"{user.DisplayName} has left {user.ChannelId}"
-                };
-                ChatMessagesQueue.Queue.Add(new ChatMessage(null, user.ChannelId ,leftChannelMessage), cancellationToken);
-                user.TcpClient.Close();
-            }
-            else
-            {
-                // Send error message, send bye and remove the user
-                var errorMessage = new ErrMessage
-                {
-                    DisplayName = "Server",
-                    MessageContent = "Invalid message"
-                };
-                _ = Task.Run(() => user.SendMessageAsync(errorMessage), cancellationToken);
-                if (user.State != ClientState.State.Start)
-                {
-                    _ = Task.Run(() => user.SendMessageAsync(new ByeMessage()), cancellationToken);
-                    ChatUsers.RemoveUser(user.ConnectionEndPoint);
-                    
-                    var leftChannelMessage = new MsgMessage
-                    {
-                        DisplayName = "Server",
-                        MessageContent = $"{user.DisplayName} has left {user.ChannelId}"
-                    };
-                    ChatMessagesQueue.Queue.Add(new ChatMessage(null, user.ChannelId ,leftChannelMessage), cancellationToken);
-                    
-                }
-                
-                user.TcpClient.Close();
-            }
-            
-        }
-        else
-        {
-            
-            Console.WriteLine("User not found in the connected users list.");
-        }
-        Console.WriteLine($"TCP Message Processed: {message}");
+        user.Username = authMessage.Username;
+        user.DisplayName = authMessage.DisplayName;
+        user.Secret = authMessage.Secret;
+        user.State = ClientState.State.Open;
+
+        // TODO: check already existing users with the same login
+        
+        // Assuming all these methods are now within the user class
+        _ = Task.Run(() => user.SendMessageAsync(new ReplyMessage(1, "Successfully authenticated")));
+        // Add the message to the queue to be printed in the chat
+        var printMessage = new MsgMessage("Server", $"{user.DisplayName} has joined {user.ChannelId}");
+        ChatMessagesQueue.Queue.Add(new ChatMessage(user, user.ChannelId ,printMessage), cancellationToken);
+        return Task.CompletedTask;
     }
 
-    private async Task ProcessUdpUserMessage(UdpChatUser user, ClientMessage message, CancellationToken cancellationToken)
+    private Task HandleMsgMessage(AbstractChatUser user, MsgMessage msgMessage, CancellationToken cancellationToken)
     {
-        // Implement UDP-specific message processing logic
-        Console.WriteLine($"UDP Message Processed: {message}");
+        ChatMessagesQueue.Queue.Add(new ChatMessage(user, user.ChannelId, msgMessage), cancellationToken);
+        return Task.CompletedTask;
     }
+    
+    private Task HandleJoinMessage(AbstractChatUser user, JoinMessage joinMessage, CancellationToken cancellationToken)
+    {
+        // Create the left message to be print into chat channel
+        var leftChannelMessage = new MsgMessage("Server", $"{user.DisplayName} has left {user.ChannelId}");
+        ChatMessagesQueue.Queue.Add(new ChatMessage(user, user.ChannelId ,leftChannelMessage), cancellationToken);
+                
+        // Changing the channel for the user
+        user.ChannelId = joinMessage.ChannelId;
+
+        // Create the join message to be print into chat channel
+        var joinedChannelMessage = new MsgMessage("Server", $"{user.DisplayName} has joined {user.ChannelId}");
+        ChatMessagesQueue.Queue.Add(new ChatMessage(null, user.ChannelId ,joinedChannelMessage), cancellationToken);
+
+        // Send positive reply to the user 
+        _ = Task.Run(() => user.SendMessageAsync(new ReplyMessage(1, $"Successfully joined to the {user.ChannelId}.")));
+        return Task.CompletedTask;
+    }
+
+    private Task HandleByeMessage(AbstractChatUser user, CancellationToken cancellationToken)
+    {
+        // Create the left message to be print into chat channel
+        var leftChannelMessage = new MsgMessage("Server", $"{user.DisplayName} has left {user.ChannelId}");
+        ChatMessagesQueue.Queue.Add(new ChatMessage(user, user.ChannelId ,leftChannelMessage), cancellationToken);
+        
+        // Disconnect the client from the server.
+        _ = Task.Run(user.ClientDisconnect);
+        return Task.CompletedTask;
+    }
+    
+    private async Task HandleErrMessage(AbstractChatUser user, CancellationToken cancellationToken)
+    {
+        // Send Bye message to the user
+        _ = Task.Run(() => user.SendMessageAsync(new ByeMessage()));
+        
+        // Same logic as in the ByeMessage
+        await HandleByeMessage(user, cancellationToken);
+    }
+    
+    private async Task HandleUnknownMessage(AbstractChatUser user, CancellationToken cancellationToken)
+    {
+        // Send error message, send bye and remove the user
+        var errorMessage = new ErrMessage("Server", "Invalid message");
+        _ = Task.Run(() => user.SendMessageAsync(errorMessage));
+        
+        await HandleByeMessage(user, cancellationToken);
+    }
+    
 }

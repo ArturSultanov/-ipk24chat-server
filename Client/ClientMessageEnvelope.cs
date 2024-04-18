@@ -2,6 +2,7 @@ using ipk24chat_server.Chat;
 
 namespace ipk24chat_server.Client;
 
+// ClientMessageEnvelope is a class that wraps a user and a message together for easier handling in the server.
 public class ClientMessageEnvelope
 {
     private AbstractChatUser _user;

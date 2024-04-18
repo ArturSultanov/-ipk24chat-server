@@ -13,7 +13,7 @@ public class ChatMessagePrinter
             {
                 // Take will block if there are no items in the collection
                 var message = ChatMessagesQueue.Queue.Take(cancellationToken);
-                await Task.Run(() => PrintMessageToChat(message), cancellationToken);
+                await PrintMessageToChat(message, cancellationToken);
             }
         }
         catch (OperationCanceledException)
@@ -28,12 +28,28 @@ public class ChatMessagePrinter
         }
     }
 
-    private Task PrintMessageToChat(ChatMessage message)
+    private async Task PrintMessageToChat(ChatMessage message, CancellationToken cancellationToken)
     {
-        // Upon user successfully joining to a channel the server is required to "broadcast" a message to all users connected to the channel, with display name Server and content {DisplayName} has joined {ChannelID}..
-
-        
-        return Task.CompletedTask;
+        var tasks = new List<Task>();
+        foreach (var user in ChatUsers.ConnectedUsers.Values)
+        {
+            if (user != message.IgnoredUser && user.ChannelId == message.ChannelId)
+            {
+                tasks.Add(SendMessageSafelyAsync(user, message.MsgMessage, cancellationToken));
+            }
+        }
+        await Task.WhenAll(tasks);
     }
-    
+    private async Task SendMessageSafelyAsync(AbstractChatUser user, MsgMessage message, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await user.SendMessageAsync(message);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to send message to {user.Username}: {ex.Message}");
+            // Optionally handle the failure e.g., retry logic, logging, etc.
+        }
+    }
 }
