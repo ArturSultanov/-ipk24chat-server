@@ -5,7 +5,7 @@ namespace ipk24chat_server.Client;
 // ClientMessage is the base class for all messages that can be sent/receive from/to the client to/from the server
 public abstract class ClientMessage
 {
-    public byte Type { get; protected init; }
+    public byte? Type { get; protected init; }
     public ushort? MessageId { get; set; } // Used for Udp only, save the message id
 }
 
@@ -102,5 +102,14 @@ public class ReplyMessage : ClientMessage
         MessageContent = messageContent;
         Type = ChatProtocol.MessageType.Reply;
         RefMessageId = refMessageId; // Udp only
+    }
+    
+}
+
+public class UnknownMessage : ClientMessage
+{
+    public UnknownMessage()
+    {
+        Type = null;
     }
 }

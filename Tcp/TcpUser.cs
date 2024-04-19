@@ -50,12 +50,15 @@ namespace ipk24chat_server.Tcp
                 // Exception can be causes by RemoveUser when the user is already removed, or had not been added.
                 // Ignore exception if the client is already disconnected.
             }
-
+            
+            // Tag the user messages with "DISCONNECTED", so they can be ignored in the message queue.
+            ClientMessageQueue.TagUserMessages(this, "DISCONNECTED");
+            
             return Task.CompletedTask;
         }
 
         
-        public override ushort? LastMessageId()
+        public override ushort? LastSentMessageId()
         {
             return null;
         }

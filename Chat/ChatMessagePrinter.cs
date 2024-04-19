@@ -33,7 +33,7 @@ public class ChatMessagePrinter
         var tasks = new List<Task>();
         foreach (var user in ChatUsers.ConnectedUsers.Values)
         {
-            if (user != message.IgnoredUser && user.ChannelId == message.ChannelId)
+            if (user != message.IgnoredUser && user.State == ClientState.State.Open && user.ChannelId == message.ChannelId)
             {
                 tasks.Add(SendMessageSafelyAsync(user, message.MsgMessage, cancellationToken));
             }
@@ -48,8 +48,11 @@ public class ChatMessagePrinter
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to send message to {user.Username}: {ex.Message}");
-            // Optionally handle the failure e.g., retry logic, logging, etc.
+            Console.Error.WriteLine($"Failed to send message to {user.Username}: {ex.Message}");
+            user.State = ClientState.State.Error;
+            
+            // Disconnect the client, don't need to send bye, because the client is unreachable
+            await user.ClientDisconnect(); 
         }
     }
 }

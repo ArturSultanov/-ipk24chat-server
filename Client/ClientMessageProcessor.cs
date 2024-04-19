@@ -26,10 +26,11 @@ public class ClientMessageProcessor
 
     private async Task ProcessClientMessageAsync(ClientMessageEnvelope envelope, CancellationToken cancellationToken)
     {
-        if (!ChatUsers.TryGetUser(envelope.User.ConnectionEndPoint, out var user) || user == null)
+        if (!ChatUsers.TryGetUser(envelope.User.ConnectionEndPoint, out var user) || user == null || !string.IsNullOrEmpty(envelope.Tag))
         {
-            // Just ignored the message if the user is not found. More efficient than cleaning when client disconnect.
             // This could be a case where the user disconnected before the message was processed.
+            // Just ignored the message if the user is not found.
+            // More efficient than cleaning message queue in loop when client disconnect.
             return;
         }
 
@@ -44,10 +45,10 @@ public class ClientMessageProcessor
             case JoinMessage joinMessage when user.State == ClientState.State.Open:
                 await HandleJoinMessage(user, joinMessage, cancellationToken);
                 break;
-            case ErrMessage:
+            case ErrMessage:                            // Can be handled in any state
                 await HandleErrMessage(user, cancellationToken);
                 break;
-            case ByeMessage:
+            case ByeMessage:                        // Can be handled in any state
                 await HandleByeMessage(user, cancellationToken);
                 break;
             default:
@@ -56,14 +57,14 @@ public class ClientMessageProcessor
         }
     }
 
-    // Processing the initial AUTH-messages
+    // Processing the initial AUTH-messages from the client
     private async Task HandleAuthMessage(AbstractChatUser user, AuthMessage authMessage, CancellationToken cancellationToken)
     {
         // Update the user details
         user.UpdateUserDetails(authMessage.Username, authMessage.DisplayName, authMessage.Secret);
         user.State = ClientState.State.Open;
 
-        // Send the reply message
+        // Send the reply message. By default, all initial auth-messages are successful.
         ReplyMessage replyMessage = new ReplyMessage(1, "Successfully authenticated", authMessage.MessageId);
         
         try
@@ -75,13 +76,12 @@ public class ClientMessageProcessor
             await user.ClientDisconnect();
             return;
         }
-
         
         var printMessage = new MsgMessage("Server", $"{user.DisplayName} has joined {user.ChannelId}");
         ChatMessagesQueue.Queue.Add(new ChatMessage(user, user.ChannelId, printMessage), cancellationToken);
     }
 
-    // // Processing the text MSG-messages
+    // Processing the text MSG-messages from the client
     private Task HandleMsgMessage(AbstractChatUser user, MsgMessage msgMessage, CancellationToken cancellationToken)
     {
         if (msgMessage.DisplayName != user.DisplayName) user.DisplayName = msgMessage.DisplayName;
@@ -89,6 +89,7 @@ public class ClientMessageProcessor
         return Task.CompletedTask;
     }
 
+    // Processing the JOIN-message from the client
     private async Task HandleJoinMessage(AbstractChatUser user, JoinMessage joinMessage, CancellationToken cancellationToken)
     {
         var leftChannelMessage = new MsgMessage("Server", $"{user.DisplayName} has left {user.ChannelId}");
@@ -104,24 +105,46 @@ public class ClientMessageProcessor
         await user.SendMessageAsync(replyMessage);
     }
 
+    // Processing the ERR-message from the client
     private async Task HandleErrMessage(AbstractChatUser user, CancellationToken cancellationToken)
     {
-        await user.SendMessageAsync(new ByeMessage());
+        user.State = ClientState.State.Error;
+        // Send Bye 
+        
+        try
+        { 
+            await user.SendMessageAsync(new ByeMessage());
+        }
+        catch (Exception)
+        {
+            // Ignore exception if the user is already disconnected.
+        }
+        
         await HandleByeMessage(user, cancellationToken);
     }
-
-    private async Task HandleByeMessage(AbstractChatUser user, CancellationToken cancellationToken)
-    {
-        var leftChannelMessage = new MsgMessage("Server", $"{user.DisplayName} has left {user.ChannelId}");
-        ChatMessagesQueue.Queue.Add(new ChatMessage(user, user.ChannelId, leftChannelMessage), cancellationToken);
-        
-        await user.ClientDisconnect();
-    }
-
+    
+    // Processing the unknown message from the client
     private async Task HandleUnknownMessage(AbstractChatUser user, CancellationToken cancellationToken)
     {
-        var errorMessage = new ErrMessage("Server", "Invalid message");
+        // Send error message to the user
+        var errorMessage = new ErrMessage("Server", "Invalid message OR state.");
+        // Send the error message to the user
         await user.SendMessageAsync(errorMessage);
+        // Send Bye and disconnect the user
         await HandleByeMessage(user, cancellationToken);
+    }
+    
+    // Processing the BYE-message from the client and client disconnection
+    private async Task HandleByeMessage(AbstractChatUser user, CancellationToken cancellationToken)
+    {
+        user.State = ClientState.State.End;
+        
+        if (user.DisplayName != string.Empty && user.ChannelId != string.Empty)
+        {
+            var leftChannelMessage = new MsgMessage("Server", $"{user.DisplayName} has left {user.ChannelId}");
+            ChatMessagesQueue.Queue.Add(new ChatMessage(user, user.ChannelId, leftChannelMessage), cancellationToken);
+        }
+        
+        await user.ClientDisconnect();
     }
 }

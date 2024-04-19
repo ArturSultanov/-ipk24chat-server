@@ -8,8 +8,6 @@ public static class ChatUsers
     // Assuming each user has a unique identifier, like a username or GUID
     public static readonly ConcurrentDictionary<EndPoint, AbstractChatUser> ConnectedUsers = new ConcurrentDictionary<EndPoint, AbstractChatUser>();
     
-    
-
     // Adding a user
     public static void AddUser(EndPoint endPoint, AbstractChatUser user)
     {

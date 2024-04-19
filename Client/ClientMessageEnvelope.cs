@@ -1,23 +1,67 @@
+using System;
 using ipk24chat_server.Chat;
 
 namespace ipk24chat_server.Client;
 
-// ClientMessageEnvelope is a class that wraps a user and a message together for easier handling in the server.
 public class ClientMessageEnvelope
 {
+    private readonly object _lock = new object();
     private AbstractChatUser _user;
     private ClientMessage _message;
+    private string _tag = string.Empty;
     
     public AbstractChatUser User
     {
-        get { return _user; }
-        set { _user = value; }
+        get
+        {
+            lock (_lock)
+            {
+                return _user;
+            }
+        }
+        set
+        {
+            lock (_lock)
+            {
+                _user = value;
+            }
+        }
     }
     
     public ClientMessage Message
     {
-        get { return _message; }
-        set { _message = value; }
+        get
+        {
+            lock (_lock)
+            {
+                return _message;
+            }
+        }
+        set
+        {
+            lock (_lock)
+            {
+                _message = value;
+            }
+        }
+    }
+    
+    public string Tag
+    {
+        get
+        {
+            lock (_lock)
+            {
+                return _tag;
+            }
+        }
+        set
+        {
+            lock (_lock)
+            {
+                _tag = value;
+            }
+        }
     }
     
     public ClientMessageEnvelope(AbstractChatUser user, ClientMessage message)
@@ -25,5 +69,4 @@ public class ClientMessageEnvelope
         _user = user;
         _message = message;
     }
-    
 }
