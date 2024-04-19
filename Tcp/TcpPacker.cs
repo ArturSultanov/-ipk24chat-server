@@ -21,8 +21,8 @@ public static class TcpPacker
             case ChatProtocol.MessageType.Bye:
                 return PackByeMessage();
             default:
-                //return Array.Empty<byte>();
-                throw new ArgumentException($"Unknown message type: {message}");
+                return Array.Empty<byte>();
+                // throw new ArgumentException($"Unknown message type: {message}");
         }
     }
     
@@ -54,55 +54,56 @@ public static class TcpPacker
     
     // Transform string received from client into TcpMessage object, according to the IPK24-chat protocol.
     public static ClientMessage Unpack(string message)
+    {
+        if (message.StartsWith("AUTH"))
         {
-            if (message.StartsWith("AUTH"))
-            {
-                return ParseAuthMessage(message);
-            }
-            else if (message.StartsWith("JOIN"))
-            {
-                return ParseJoinMessage(message);
-            }
-            else if (message.StartsWith("MSG FROM"))
-            {
-                return ParseMsgMessage(message);
-            }
-            else if (message.StartsWith("ERR FROM"))
-            {
-                return ParseErrMessage(message);
-            }
-            else if (message.StartsWith("BYE"))
-            {
-                return new ByeMessage();
-            }
-            else
-            {
-                throw new ArgumentException($"Unknown message type: {message}");
-            }
+            return ParseAuthMessage(message);
         }
+        else if (message.StartsWith("JOIN"))
+        {
+            return ParseJoinMessage(message);
+        }
+        else if (message.StartsWith("MSG FROM"))
+        {
+            return ParseMsgMessage(message);
+        }
+        else if (message.StartsWith("ERR FROM"))
+        {
+            return ParseErrMessage(message);
+        }
+        else if (message.StartsWith("BYE"))
+        {
+            return new ByeMessage();
+        }
+        else
+        {
+            return new UnknownMessage();
+            // throw new ArgumentException($"Unknown message type: {message}");
+        }
+    }
 
-        private static AuthMessage ParseAuthMessage(string message)
-        {
-            var parts = message.Split(' ');
-            return new AuthMessage(parts[1], parts[3], parts[5]);
-        }
+    private static AuthMessage ParseAuthMessage(string message)
+    {
+        var parts = message.Split(' ');
+        return new AuthMessage(parts[1], parts[3], parts[5]);
+    }
 
-        private static JoinMessage ParseJoinMessage(string message)
-        {
-            var parts = message.Split(' ');
-            return new JoinMessage(parts[1], parts[3]);
-        }
+    private static JoinMessage ParseJoinMessage(string message)
+    {
+        var parts = message.Split(' ');
+        return new JoinMessage(parts[1], parts[3]);
+    }
 
-        private static MsgMessage ParseMsgMessage(string message)
-        {
-            var parts = message.Split(new[] { "MSG FROM", "IS" }, StringSplitOptions.RemoveEmptyEntries);
-            return new MsgMessage(parts[0].Trim(), parts[1].Trim());
-            
-        }
+    private static MsgMessage ParseMsgMessage(string message)
+    {
+        var parts = message.Split(new[] { "MSG FROM", "IS" }, StringSplitOptions.RemoveEmptyEntries);
+        return new MsgMessage(parts[0].Trim(), parts[1].Trim());
+        
+    }
 
-        private static ErrMessage ParseErrMessage(string message)
-        {
-            var parts = message.Split(new[] { "ERR FROM", "IS" }, StringSplitOptions.RemoveEmptyEntries);
-            return new ErrMessage(parts[0].Trim(), parts[1].Trim());
-        }
+    private static ErrMessage ParseErrMessage(string message)
+    {
+        var parts = message.Split(new[] { "ERR FROM", "IS" }, StringSplitOptions.RemoveEmptyEntries);
+        return new ErrMessage(parts[0].Trim(), parts[1].Trim());
+    }
 }
