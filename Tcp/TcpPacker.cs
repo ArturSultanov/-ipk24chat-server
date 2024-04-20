@@ -73,7 +73,7 @@ public static class TcpPacker
         }
         else if (message.StartsWith("BYE"))
         {
-            return new ByeMessage();
+            return ParseByeMessage(message);
         }
         else
         {
@@ -82,28 +82,97 @@ public static class TcpPacker
         }
     }
 
-    private static AuthMessage ParseAuthMessage(string message)
+    private static ClientMessage ParseAuthMessage(string message)
     {
-        var parts = message.Split(' ');
-        return new AuthMessage(parts[1], parts[3], parts[5]);
+        const string commandPrefix = "AUTH ";
+        if (!message.StartsWith(commandPrefix)) return new UnknownMessage();
+
+        var parts = message.Substring(commandPrefix.Length).Split(new[] {" AS ", " USING "}, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length != 3) return new UnknownMessage();
+
+        string username = parts[0].Trim();
+        string displayName = parts[1].Trim();
+        string secret = parts[2].Trim();
+
+        if (username.Length > ChatProtocol.MaxUsernameLength ||
+            displayName.Length > ChatProtocol.MaxDisplayNameLength ||
+            secret.Length > ChatProtocol.MaxSecretLength)
+        {
+            return new UnknownMessage();
+        }
+
+        return new AuthMessage(username, displayName, secret);
     }
 
-    private static JoinMessage ParseJoinMessage(string message)
+
+    private static ClientMessage ParseJoinMessage(string message)
     {
-        var parts = message.Split(' ');
-        return new JoinMessage(parts[1], parts[3]);
+        const string commandPrefix = "JOIN ";
+        if (!message.StartsWith(commandPrefix)) return new UnknownMessage();
+
+        var parts = message.Substring(commandPrefix.Length).Split(new[] {" AS "}, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length != 2) return new UnknownMessage();
+
+        string channelId = parts[0].Trim();
+        string displayName = parts[1].Trim();
+
+        if (channelId.Length > ChatProtocol.MaxChannelIdLength || displayName.Length > ChatProtocol.MaxDisplayNameLength)
+        {
+            return new UnknownMessage();
+        }
+
+        return new JoinMessage(channelId, displayName);
     }
 
-    private static MsgMessage ParseMsgMessage(string message)
+
+    private static ClientMessage ParseMsgMessage(string message)
     {
-        var parts = message.Split(new[] { "MSG FROM", "IS" }, StringSplitOptions.RemoveEmptyEntries);
-        return new MsgMessage(parts[0].Trim(), parts[1].Trim());
-        
+        const string commandPrefix = "MSG FROM ";
+        if (!message.StartsWith(commandPrefix)) return new UnknownMessage();
+
+        var parts = message.Substring(commandPrefix.Length).Split(new[] {" IS "}, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length != 2) return new UnknownMessage();
+
+        string displayName = parts[0].Trim();
+        string messageContent = parts[1].Trim();
+
+        if (displayName.Length > ChatProtocol.MaxDisplayNameLength || messageContent.Length > ChatProtocol.MaxMessageContentLength)
+        {
+            return new UnknownMessage();
+        }
+
+        return new MsgMessage(displayName, messageContent);
     }
 
-    private static ErrMessage ParseErrMessage(string message)
+
+    private static ClientMessage ParseErrMessage(string message)
     {
-        var parts = message.Split(new[] { "ERR FROM", "IS" }, StringSplitOptions.RemoveEmptyEntries);
-        return new ErrMessage(parts[0].Trim(), parts[1].Trim());
+        const string commandPrefix = "ERR FROM ";
+        if (!message.StartsWith(commandPrefix)) return new UnknownMessage();
+
+        var parts = message.Substring(commandPrefix.Length).Split(new[] {" IS "}, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length != 2) return new UnknownMessage();
+
+        string displayName = parts[0].Trim();
+        string messageContent = parts[1].Trim();
+
+        if (displayName.Length > ChatProtocol.MaxDisplayNameLength || messageContent.Length > ChatProtocol.MaxMessageContentLength)
+        {
+            return new UnknownMessage();
+        }
+
+        return new ErrMessage(displayName, messageContent);
     }
+    
+    private static ClientMessage ParseByeMessage(string message)
+    {
+        const string commandPrefix = "BYE";
+        if (message.Trim().Equals(commandPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return new ByeMessage();
+        }
+        return new UnknownMessage();
+    }
+
+
 }
