@@ -35,7 +35,7 @@ public class UdpServer
     {
         
         Task welcomeTask = HandleWelcomeClientsAsync(cancellationToken);
-        Task communicationTask = Task.Run(() => HandleCommunicationClientsAsync(cancellationToken));
+        Task _ = Task.Run(() => HandleCommunicationClientsAsync(cancellationToken));
 
         await welcomeTask;
     }

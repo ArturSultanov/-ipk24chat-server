@@ -20,6 +20,7 @@ internal class Program
 
             var chatMessagePrinter = new ChatMessagePrinter();
             var messageProcessor = new ClientMessageProcessor();
+            var userInputHandlernew = new UserInputHandler();
             tcpServer = new TcpServer();
             udpServer = new UdpServer();
             try
@@ -39,10 +40,11 @@ internal class Program
 
             Console.WriteLine("Starting TCP server...");
             
-            Task tcpServerTask = tcpServer.StartTcpServerAsync(cts.Token, () => cts.Cancel());
-            Task udpServerTask = udpServer.StartUdpServerAsync(cts.Token);
+            Task _ = Task.Run(() => userInputHandlernew.StartListeningForCommandsAsync(cts.Token, () => cts.Cancel()));
             Task messageProcessorTask = messageProcessor.ProcessMessagesAsync(cts.Token);
             Task chatMessagePrinterTask = chatMessagePrinter.PrintMessagesAsync(cts.Token);
+            Task tcpServerTask = tcpServer.StartTcpServerAsync(cts.Token, () => cts.Cancel());
+            Task udpServerTask = udpServer.StartUdpServerAsync(cts.Token);
             await Task.WhenAll(tcpServerTask, udpServerTask, messageProcessorTask, chatMessagePrinterTask);
         }
         catch (ArgumentException ex)
