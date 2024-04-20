@@ -23,8 +23,8 @@ public class UdpServer
 {
     private bool _stopServer; 
     
-    private UdpClient _welcomeClient = new UdpClient();
-    private UdpClient _communicationClient = new UdpClient();
+    private readonly UdpClient _welcomeClient = new UdpClient();
+    private readonly UdpClient _communicationClient = new UdpClient();
     
     /*
      * Initializes the UDP server by binding the welcome and communication clients to specific endpoints.

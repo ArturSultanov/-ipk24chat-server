@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.Net;
-
 namespace ipk24chat_server.Chat;
 
 /*

@@ -1,10 +1,8 @@
-using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using ipk24chat_server.Client;
 using ipk24chat_server.Chat;
 using ipk24chat_server.System;
-
 namespace ipk24chat_server.Tcp;
 
 /*
@@ -18,10 +16,10 @@ namespace ipk24chat_server.Tcp;
  * serve multiple clients concurrently. The server operates continuously under a cancellation
  * policy provided by the CancellationToken.
  */
-public class TcpServer()
+public class TcpServer
 {
     
-    private TcpListener _listener = new TcpListener(ChatSettings.ServerIp, ChatSettings.ServerPort);
+    private TcpListener _listener = new(ChatSettings.ServerIp, ChatSettings.ServerPort);
 
     /*
      * Starts the TCP server to listen for incoming client connections and handle them asynchronously.

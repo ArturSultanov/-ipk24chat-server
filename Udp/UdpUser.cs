@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.Net;
-using System.Collections.Generic;
 using System.Net.Sockets;
 using ipk24chat_server.Client;
 using ipk24chat_server.Chat;
@@ -18,8 +17,8 @@ public class UdpUser : AbstractChatUser
 {
     private readonly UdpClient _udpClient;
     public BlockingCollection<ConfirmMessage> ConfirmCollection = new BlockingCollection<ConfirmMessage>(10000);
-    private ushort _lastSentMessageId = 0;
-    private ushort _lastReceivedMessageId = 0;
+    private ushort _lastSentMessageId;
+    private ushort _lastReceivedMessageId;
     private readonly HashSet<ushort> _receivedMessageIds = new HashSet<ushort>(); // Tracks received message IDs to handle duplicates
     private readonly object _lock = new object();  // Lock object for synchronization
     private CancellationToken _cancellationToken;

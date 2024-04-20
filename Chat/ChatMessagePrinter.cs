@@ -1,5 +1,4 @@
 using ipk24chat_server.Client;
-
 namespace ipk24chat_server.Chat;
 
 /*

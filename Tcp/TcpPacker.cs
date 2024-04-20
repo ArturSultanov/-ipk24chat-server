@@ -1,7 +1,6 @@
 using System.Text;
 using ipk24chat_server.Client;
 using ipk24chat_server.Chat;
-
 namespace ipk24chat_server.Tcp;
 
 /*
@@ -29,7 +28,7 @@ public static class TcpPacker
             case ChatProtocol.MessageType.Bye:
                 return PackByeMessage();
             default:
-                return Array.Empty<byte>();
+                return [];
         }
     }
     

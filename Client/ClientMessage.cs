@@ -1,5 +1,4 @@
 using ipk24chat_server.Chat;
-
 namespace ipk24chat_server.Client;
 
 // ClientMessage is the base class for all messages that can be sent/receive from/to the client to/from the server

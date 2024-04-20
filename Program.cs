@@ -40,7 +40,7 @@ internal class Program
         }
         catch (ArgumentException ex)
         {
-            Console.Error.WriteLine($"ERR: {ex.Message}");
+            await Console.Error.WriteLineAsync($"ERR: {ex.Message}");
             Console.WriteLine("Use -h for help on how to use the program.");
             Environment.Exit(0);
         }
