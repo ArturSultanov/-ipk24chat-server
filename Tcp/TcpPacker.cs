@@ -4,10 +4,18 @@ using ipk24chat_server.Chat;
 
 namespace ipk24chat_server.Tcp;
 
+/*
+ * TcpPacker is a class that is used to pack and unpack messages from the client.
+ * It is used to transform a TcpMessage object into bytes to be sent to the client, according to the IPK24-chat protocol.
+ * It is also used to transform a string received from the TCP client into a TcpMessage object, according to the IPK24-chat protocol.
+ */
 public static class TcpPacker
 {
     
-    // Transform TcpMessage object into bytes to be sent to client, according to the IPK24-chat protocol.
+    /*
+     * Pack a ClientMessage object into bytes to be sent to the client, according to the IPK24-chat protocol.
+     * The message is packed according to the message type.
+     */
     public static byte[] Pack(ClientMessage message)
     {
         switch (message.Type)
@@ -22,7 +30,6 @@ public static class TcpPacker
                 return PackByeMessage();
             default:
                 return Array.Empty<byte>();
-                // throw new ArgumentException($"Unknown message type: {message}");
         }
     }
     
@@ -52,7 +59,10 @@ public static class TcpPacker
     }
     
     
-    // Transform string received from client into TcpMessage object, according to the IPK24-chat protocol.
+    /*
+     * Unpack a string received from the TCP client into a ClientMessage object, according to the IPK24-chat protocol.
+     * The message is unpacked according to the message type.
+     */
     public static ClientMessage Unpack(string message)
     {
         if (message.StartsWith("AUTH"))
@@ -78,7 +88,6 @@ public static class TcpPacker
         else
         {
             return new UnknownMessage();
-            // throw new ArgumentException($"Unknown message type: {message}");
         }
     }
 
@@ -100,7 +109,6 @@ public static class TcpPacker
         {
             return new UnknownMessage();
         }
-
         return new AuthMessage(username, displayName, secret);
     }
 
@@ -120,7 +128,6 @@ public static class TcpPacker
         {
             return new UnknownMessage();
         }
-
         return new JoinMessage(channelId, displayName);
     }
 
@@ -140,7 +147,6 @@ public static class TcpPacker
         {
             return new UnknownMessage();
         }
-
         return new MsgMessage(displayName, messageContent);
     }
 
@@ -160,7 +166,6 @@ public static class TcpPacker
         {
             return new UnknownMessage();
         }
-
         return new ErrMessage(displayName, messageContent);
     }
     
@@ -173,6 +178,4 @@ public static class TcpPacker
         }
         return new UnknownMessage();
     }
-
-
 }

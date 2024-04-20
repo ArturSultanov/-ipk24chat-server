@@ -2,24 +2,23 @@ using ipk24chat_server.Client;
 
 namespace ipk24chat_server.Chat;
 
+/*
+ * Represents a message printer, which prints messages to the particular Channel in the chat.
+ * The printer is responsible for sending messages to all connected users in the channel.
+ */
 public class ChatMessagePrinter
 {
     
+    // Print messages from the queue to the chat.
     public async Task PrintMessagesAsync(CancellationToken cancellationToken)
     {
         try
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                // Take will block if there are no items in the collection
                 var message = ChatMessagesQueue.Queue.Take(cancellationToken);
-                await PrintMessageToChat(message, cancellationToken);
+                await PrintMessageToChat(message);
             }
-        }
-        catch (OperationCanceledException)
-        {
-            // Handle cancellation
-            Console.WriteLine("Message processing was canceled.");
         }
         finally
         {
@@ -28,31 +27,17 @@ public class ChatMessagePrinter
         }
     }
 
-    private async Task PrintMessageToChat(ChatMessage message, CancellationToken cancellationToken)
+    private async Task PrintMessageToChat(ChatMessage message)
     {
+        // Create a list of tasks to send the message to all connected users in the channel
         var tasks = new List<Task>();
         foreach (var user in ConnectedUsers.UsersDict.Values)
         {
             if (user != message.IgnoredUser && user.State == ClientState.State.Open && user.ChannelId == message.ChannelId)
             {
-                tasks.Add(SendMessageSafelyAsync(user, message.MsgMessage, cancellationToken));
+                tasks.Add(user.SendMessageAsync(message.MsgMessage));
             }
         }
         await Task.WhenAll(tasks);
-    }
-    private async Task SendMessageSafelyAsync(AbstractChatUser user, MsgMessage message, CancellationToken cancellationToken)
-    {
-        try
-        {
-            await user.SendMessageAsync(message);
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"Failed to send message to {user.Username}: {ex.Message}");
-            user.State = ClientState.State.Error;
-            
-            // Disconnect the client, don't need to send bye, because the client is unreachable
-            await user.ClientDisconnect(cancellationToken); 
-        }
     }
 }

@@ -7,11 +7,26 @@ using ipk24chat_server.System;
 
 namespace ipk24chat_server.Tcp;
 
+/*
+ * Represents a TCP server that handles incoming TCP connections, manages user sessions,
+ * and processes incoming data from connected clients. This class encapsulates all aspects
+ * of network management, including listening for incoming connections, handling client
+ * data reception, and safely closing connections. It utilizes asynchronous programming to
+ * manage multiple client connections efficiently and to maintain responsive server operations.
+ *
+ * Each connected client is handled in a separate asynchronous task, allowing the server to
+ * serve multiple clients concurrently. The server operates continuously under a cancellation
+ * policy provided by the CancellationToken.
+ */
 public class TcpServer()
 {
     
     private TcpListener _listener = new TcpListener(ChatSettings.ServerIp, ChatSettings.ServerPort);
 
+    /*
+     * Starts the TCP server to listen for incoming client connections and handle them asynchronously.
+     * Continues to accept and process clients until the cancellation token is requested.
+     */
     public async Task StartTcpServerAsync(CancellationToken cancellationToken, Action requestCancel)
     {
         _listener.Start();
@@ -25,13 +40,12 @@ public class TcpServer()
                 // Check if the client has a remote endpoint
                 if (tcpClient.Client.RemoteEndPoint == null)
                 {
-                    // Console.WriteLine("Failed to obtain remote endpoint.");
                     tcpClient.Close();  // Ensure the client is properly closed to free up resources.
                     continue;  // Skip further processing and wait for the next connection.
                 }
                 
                 // Create a new user object for the connected client
-                var user = new TcpUser(tcpClient.Client.RemoteEndPoint, tcpClient);
+                var user = new TcpUser(tcpClient.Client.RemoteEndPoint, tcpClient, cancellationToken);
                 
                 // Add the user to the connected users dictionary
                 ConnectedUsers.AddUser(user.ConnectionEndPoint, user);
@@ -41,16 +55,16 @@ public class TcpServer()
                 
             }
         }
-        catch (Exception e)
-        {
-            Console.WriteLine(e); 
-        }
         finally
         {
             _listener.Stop();
         }
     }
     
+    /*
+     * Listens for messages from a connected TCP client and processes received data.
+     * Continues to listen and process data until the connection is closed or a cancellation is requested.
+     */
     private async Task ListenClientAsync(TcpUser user, CancellationToken cancellationToken)
     {
         try
@@ -64,7 +78,6 @@ public class TcpServer()
                     int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, cancellationToken);
                     if (bytesRead == 0)
                     {
-                        // Client has disconnected gracefully
                         break;
                     }
 
@@ -81,6 +94,9 @@ public class TcpServer()
         }
     }
 
+    /*
+     * Processes the data received from a client, extracting and handling complete messages.
+     */
     private Task ProcessReceivedData(StringBuilder messageBuilder, TcpUser user)
     {
         string messageData = messageBuilder.ToString();

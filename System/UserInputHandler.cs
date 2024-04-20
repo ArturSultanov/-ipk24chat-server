@@ -4,6 +4,10 @@ using System.Threading.Tasks;
 
 namespace ipk24chat_server.System;
 
+/*
+ * UserInputHandler is a class that is used to handle user input from the console.
+ * It is used to listen for user input and cancel the listening task when the user sends EOF (^D).
+ */
 public class UserInputHandler
 {
     public async Task StartListeningForCommandsAsync(CancellationToken cancellationToken, Action requestCancel)

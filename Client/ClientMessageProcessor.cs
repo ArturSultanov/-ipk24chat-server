@@ -14,13 +14,9 @@ public class ClientMessageProcessor
                 await ProcessClientMessageAsync(envelope, cancellationToken);
             }
         }
-        catch (OperationCanceledException)
+        catch (Exception)
         {
-            Console.WriteLine("Message processing was canceled.");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Exception in message processing: {ex.Message}");
+            // Ignore exception the logic in the ProcessClientMessageAsync will handle all errors.
         }
     }
 
@@ -48,7 +44,7 @@ public class ClientMessageProcessor
             case ErrMessage:                            // Can be handled in any state
                 await HandleErrMessage(user, cancellationToken);
                 break;
-            case ByeMessage:                        // Can be handled in any state
+            case ByeMessage:                            // Can be handled in any state
                 await HandleByeMessage(user, cancellationToken);
                 break;
             default:

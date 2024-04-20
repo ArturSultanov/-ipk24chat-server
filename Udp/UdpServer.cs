@@ -2,9 +2,23 @@ using System.Net;
 using System.Net.Sockets;
 using ipk24chat_server.Chat;
 using ipk24chat_server.Client;
+using ipk24chat_server.System;
 
 namespace ipk24chat_server.Udp;
 
+/**
+ * The UdpServer class manages UDP connections for a chat server.
+ * It handles two main tasks: managing initial connections through the welcome client and
+ * managing ongoing communication through the communication client.
+ *
+ * This server supports handling initial handshake messages to authenticate and register new clients
+ * and then switches these clients to a communication-specific handling process that listens for
+ * and sends messages continuously until the server stops.
+ *
+ * It uses separate tasks to handle welcome messages and communication messages to ensure that
+ * client interactions are processed in real-time and efficiently, without blocking operations impacting
+ * the user experience.
+ */
 public class UdpServer
 {
     private bool _stopServer; 
@@ -12,25 +26,23 @@ public class UdpServer
     private UdpClient _welcomeClient = new UdpClient();
     private UdpClient _communicationClient = new UdpClient();
     
+    /*
+     * Initializes the UDP server by binding the welcome and communication clients to specific endpoints.
+     */
     public void ChatConnect()
     {
-        try
-        {
-            // Create UdpClient for welcome messages
-            IPEndPoint welcomeEndPoint = new IPEndPoint(ChatSettings.ServerIp, ChatSettings.ServerPort);
-            _welcomeClient.Client.Bind(welcomeEndPoint);
+        // Create UdpClient for welcome messages
+        IPEndPoint welcomeEndPoint = new IPEndPoint(ChatSettings.ServerIp, ChatSettings.ServerPort);
+        _welcomeClient.Client.Bind(welcomeEndPoint);
             
-            // Create UdpClient for communication
-            IPEndPoint communicationEndPoint = new IPEndPoint(ChatSettings.ServerIp, 0);
-            _communicationClient.Client.Bind(communicationEndPoint);
-        }
-        catch (Exception e)
-        {
-            Console.Error.WriteLine(e);
-            throw;
-        } 
+        // Create UdpClient for communication
+        IPEndPoint communicationEndPoint = new IPEndPoint(ChatSettings.ServerIp, 0);
+        _communicationClient.Client.Bind(communicationEndPoint);
     }
 
+    /*
+     * Starts the UDP server by initiating the handling of welcome and communication clients asynchronously.
+     */
     public async Task StartUdpServerAsync(CancellationToken cancellationToken)
     {
         
@@ -40,6 +52,9 @@ public class UdpServer
         await welcomeTask;
     }
     
+    /*
+     * Handles incoming messages on the welcome client. Validates and processes new connections or messages from known users
+     */
     private async Task HandleWelcomeClientsAsync(CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested)
@@ -54,18 +69,17 @@ public class UdpServer
                 continue;  // Skip to next iteration upon error
             }
 
-            if (result.Buffer[0] != 0x00)  // If not a confirm message
+            if (result.Buffer[0] != 0x00) // Non-confirm message, then send a confirmation
             {
                 byte[] confirmMessage = { 0x00, result.Buffer[1], result.Buffer[2] };
                 await _welcomeClient.SendAsync(confirmMessage, confirmMessage.Length, result.RemoteEndPoint);
             }
 
             ClientMessage clientMessage = UdpPacker.Unpack(result.Buffer);
-            
-            // Creating a temp user object to check if the user is already connected
+            Logger.LogIo("RECV", result.RemoteEndPoint.ToString(), clientMessage);
 
             if (ConnectedUsers.TryGetUser(result.RemoteEndPoint, out var user) && user != null)
-            {  // Existing user
+            {
                 if (user is UdpUser udpUser)
                 {
                     if (udpUser.HasReceivedMessageId(clientMessage.MessageId))
@@ -82,7 +96,7 @@ public class UdpServer
                     continue;
                 }
             }
-            else  // New user
+            else  // User with same EndPoint was not found, create a new user
             {
                 user = new UdpUser(result.RemoteEndPoint, _communicationClient, cancellationToken);
                 ConnectedUsers.AddUser(user.ConnectionEndPoint, user);
@@ -102,9 +116,12 @@ public class UdpServer
         }
     }
     
+    /*
+     * Handles communication with existing UDP clients, including processing of confirmations and other messages.
+     */
     private async Task HandleCommunicationClientsAsync(CancellationToken cancellationToken)
     {
-        while (!_stopServer)
+        while (!_stopServer) 
         {
             UdpReceiveResult result;
             try
@@ -113,7 +130,7 @@ public class UdpServer
             }
             catch (Exception)
             {
-                continue;  // Skip to next iteration upon error
+                continue;
             }
 
             // Send a confirmation for non-confirm messages
@@ -121,14 +138,15 @@ public class UdpServer
             {
                 byte[] confirmMessage = { ChatProtocol.MessageType.Confirm, result.Buffer[1], result.Buffer[2] };
                 await _communicationClient.SendAsync(confirmMessage, confirmMessage.Length, result.RemoteEndPoint);
+                Logger.LogIo("SENT", result.RemoteEndPoint.ToString(), UdpPacker.Unpack(confirmMessage));
             }
 
             ClientMessage clientMessage = UdpPacker.Unpack(result.Buffer);
+            Logger.LogIo("RECV", result.RemoteEndPoint.ToString(), clientMessage);
             AbstractChatUser? user;
 
             if (ConnectedUsers.TryGetUser(result.RemoteEndPoint, out user) && user is UdpUser udpUser)
             {
-                // Correct user type and user found
                 if (clientMessage.Type == ChatProtocol.MessageType.Confirm)
                 {
                     udpUser.ConfirmCollection.Add(new ConfirmMessage((ushort)clientMessage.MessageId!));
@@ -153,15 +171,15 @@ public class UdpServer
                 }
                 else
                 {
-                    // User was not found - handle as a new user for error message sending
+                    // User was not found - handle as a temp user for error message sending
                     var tempUser = new UdpUser(result.RemoteEndPoint, _communicationClient, cancellationToken);
                     var errMessage = new ErrMessage("Server", "Invalid or unauthenticated UDP user.");
                     await tempUser.SendMessageAsync(errMessage);
+                    await tempUser.ClientDisconnect(cancellationToken);
                     continue;
                 }
             }
 
-            // Further handling for authenticated users
             ClientMessageQueue.Queue.Add(new ClientMessageEnvelope(user, clientMessage));
         }
     }

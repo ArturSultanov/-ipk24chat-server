@@ -4,9 +4,16 @@ using System.Collections.Generic;
 using System.Net.Sockets;
 using ipk24chat_server.Client;
 using ipk24chat_server.Chat;
-
+using ipk24chat_server.System;
 namespace ipk24chat_server.Udp;
 
+/*
+ * UdpUser is a class that represents a user connected to the server via UDP.
+ * It is used to handle the user's connection, messages, and disconnection.
+ * UdpUser inherits from AbstractChatUser and implements the SendMessageAsync and ClientDisconnect methods.
+ * UdpUser uses a UdpClient to send and receive messages.
+ * It also uses a BlockingCollection to store confirm messages and a HashSet to track received message IDs.
+ */
 public class UdpUser : AbstractChatUser
 {
     private readonly UdpClient _udpClient;
@@ -88,8 +95,9 @@ public class UdpUser : AbstractChatUser
                 {
                     break;  // Exit loop if endpoint is not correctly specified
                 }
-
+                
                 await _udpClient.SendAsync(dataToSend, dataToSend.Length, destination);
+                Logger.LogIo("SENT", ConnectionEndPoint.ToString(), message);
                 
                 if (await WaitForConfirmation(currentMessageId))
                 {
@@ -132,7 +140,7 @@ public class UdpUser : AbstractChatUser
         ConnectedUsers.RemoveUser(ConnectionEndPoint);
         ClientMessageQueue.TagUserMessages(this, "DISCONNECTED");  // Tag messages for cleanup
         
-        if (DisplayName != string.Empty && ChannelId != string.Empty && !cancellationToken.IsCancellationRequested)
+        if (DisplayName != string.Empty && ChannelId != string.Empty && State != ClientState.State.Start && !cancellationToken.IsCancellationRequested)
         {
             var leftChannelMessage = new MsgMessage("Server", $"{DisplayName} has left {ChannelId}");
             ChatMessagesQueue.Queue.Add(new ChatMessage(this, ChannelId, leftChannelMessage), cancellationToken);

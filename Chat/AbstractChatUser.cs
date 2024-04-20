@@ -3,6 +3,10 @@ using ipk24chat_server.Client;
 
 namespace ipk24chat_server.Chat;
 
+/*
+ * Represents the abstract chat user
+ * Extend this abstract class in TcpUser and UdpUser classes
+ */
 public abstract class AbstractChatUser(EndPoint endPoint)
 {
     private readonly object _lock = new object();
@@ -47,8 +51,8 @@ public abstract class AbstractChatUser(EndPoint endPoint)
     }
     
     public abstract Task SendMessageAsync(ClientMessage message); // Abstract method to send message to the user
-    public abstract Task ClientDisconnect(CancellationToken cancellationToken);    // Abstract method to close the client
-    public abstract ushort? GetMessageIdToSend();    // Abstract method to get the message id (Udp only, null for Tcp)
+    public abstract Task ClientDisconnect(CancellationToken cancellationToken); // Abstract method for client disconnect
+    public abstract ushort? GetMessageIdToSend();    // Abstract method to get the message id (UDP only, null for TCP)
 
     public void UpdateUserDetails(string username, string displayName, string secret)
     {

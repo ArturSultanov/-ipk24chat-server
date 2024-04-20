@@ -7,10 +7,8 @@ namespace ipk24chat_server.Udp;
 public class UdpPacker
 {
     /*
-     * Pack a message into a byte array
-     * Arguments:
-     * - message: The message to be packed
-     * - messageId: The message ID used for UDP communication
+     * Pack a ClientMessage object into bytes to be sent to the client, according to the IPK24-chat protocol.
+     * The message is packed according to the message type.
      */
     public static byte[] Pack(ClientMessage message, ushort? messageId)
     {
@@ -94,8 +92,11 @@ public class UdpPacker
         writer.Write(Encoding.ASCII.GetBytes(value + '\0'));
     }
     
-    
-    // Unpack
+    /*
+     * Unpack a byte array received from the UDP client into a ClientMessage object, according to the IPK24-chat protocol.
+     * The message is unpacked according to the message type.
+     * If the message is invalid, an UnknownMessage object is returned.
+     */
     public static ClientMessage Unpack(byte[] data)
     {
         using var ms = new MemoryStream(data);

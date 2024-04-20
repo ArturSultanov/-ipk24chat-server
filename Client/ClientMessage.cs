@@ -106,6 +106,7 @@ public class ReplyMessage : ClientMessage
     
 }
 
+// UnknownMessage is a message that was sent by the client, but the server does not know how to handle it
 public class UnknownMessage : ClientMessage
 {
     public UnknownMessage()
