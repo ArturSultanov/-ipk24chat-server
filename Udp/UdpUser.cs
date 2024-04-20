@@ -10,7 +10,7 @@ namespace ipk24chat_server.Udp;
 public class UdpUser : AbstractChatUser
 {
     private readonly UdpClient _udpClient;
-    public static BlockingCollection<ConfirmMessage> ConfirmCollection = new BlockingCollection<ConfirmMessage>(10000);
+    public BlockingCollection<ConfirmMessage> ConfirmCollection = new BlockingCollection<ConfirmMessage>(10000);
     private ushort _lastSentMessageId = 0;
     private ushort _lastReceivedMessageId = 0;
     private readonly HashSet<ushort> _receivedMessageIds = new HashSet<ushort>(); // Tracks received message IDs to handle duplicates
@@ -86,21 +86,19 @@ public class UdpUser : AbstractChatUser
                 IPEndPoint? destination = ConnectionEndPoint as IPEndPoint;
                 if (destination == null)
                 {
-                    Console.WriteLine("Invalid endpoint type");
                     break;  // Exit loop if endpoint is not correctly specified
                 }
 
                 await _udpClient.SendAsync(dataToSend, dataToSend.Length, destination);
+                
+                if (await WaitForConfirmation(currentMessageId))
+                {
+                    return true;
+                }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Console.WriteLine($"Failed to send message: {ex.Message}");
                 await Task.Delay(ChatSettings.ConfirmationTimeout);
-            }
-
-            if (await WaitForConfirmation(currentMessageId))
-            {
-                return true;
             }
 
             attempts++;
@@ -110,31 +108,31 @@ public class UdpUser : AbstractChatUser
     }
 
 
-    private async Task<bool> WaitForConfirmation(ushort? messageId)
+    private Task<bool> WaitForConfirmation(ushort? messageId)
     {
         try
         {
-            if (ConfirmCollection.TryTake(out var confirmMessage, TimeSpan.FromMilliseconds(ChatSettings.ConfirmationTimeout * 4)))
+            if (ConfirmCollection.TryTake(out var confirmMessage, TimeSpan.FromMilliseconds(ChatSettings.ConfirmationTimeout)))
             {
                 if (confirmMessage.MessageId == messageId)
                 {
-                    return true;
+                    return Task.FromResult(true);
                 }
             }
         }
         catch (Exception)
         {
             // Ignore exception, just return false
-            return false;
+            return Task.FromResult(false);
         }
-        return false;
+        return Task.FromResult(false);
     }
     public override Task ClientDisconnect(CancellationToken cancellationToken)
     {
-        ChatUsers.RemoveUser(ConnectionEndPoint);
+        ConnectedUsers.RemoveUser(ConnectionEndPoint);
         ClientMessageQueue.TagUserMessages(this, "DISCONNECTED");  // Tag messages for cleanup
         
-        if (DisplayName != string.Empty && ChannelId != string.Empty)
+        if (DisplayName != string.Empty && ChannelId != string.Empty && !cancellationToken.IsCancellationRequested)
         {
             var leftChannelMessage = new MsgMessage("Server", $"{DisplayName} has left {ChannelId}");
             ChatMessagesQueue.Queue.Add(new ChatMessage(this, ChannelId, leftChannelMessage), cancellationToken);
