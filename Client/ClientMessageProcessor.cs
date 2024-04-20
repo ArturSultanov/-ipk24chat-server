@@ -4,7 +4,7 @@ namespace ipk24chat_server.Client;
 
 public class ClientMessageProcessor
 {
-    public async Task CheckMessageQueueAsync(CancellationToken cancellationToken)
+    public async Task ProcessMessagesAsync(CancellationToken cancellationToken)
     {
         try
         {
@@ -26,7 +26,7 @@ public class ClientMessageProcessor
 
     private async Task ProcessClientMessageAsync(ClientMessageEnvelope envelope, CancellationToken cancellationToken)
     {
-        if (!ChatUsers.TryGetUser(envelope.User.ConnectionEndPoint, out var user) || user == null || !string.IsNullOrEmpty(envelope.Tag))
+        if (!ConnectedUsers.TryGetUser(envelope.User.ConnectionEndPoint, out var user) || user == null || !string.IsNullOrEmpty(envelope.Tag))
         {
             // This could be a case where the user disconnected before the message was processed.
             // Just ignored the message if the user is not found.
