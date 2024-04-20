@@ -58,8 +58,9 @@ internal class Program
 
             Console.WriteLine("Starting TCP server...");
             Task serverTask = tcpServer.StartTcpServerAsync(cts.Token, () => cts.Cancel());
-
-            await serverTask;
+            // Add more tasks here.
+            
+            await serverTask; // Shoudl wait for all tasks to complete 
         }
         catch (ArgumentException ex)
         {

@@ -64,10 +64,9 @@ public class UdpUser : AbstractChatUser
 
     public override async Task ClientDisconnect()
     {
+        ChatUsers.RemoveUser(ConnectionEndPoint);
         ClientMessageQueue.TagUserMessages(this, "DISCONNECTED");  // Tag messages for cleanup
         
         await Task.Delay(10);  // Simulate some cleanup operation
-        // Implement disconnect logic here, e.g., closing sockets, releasing resources
-        throw new NotImplementedException();
     }
 }
