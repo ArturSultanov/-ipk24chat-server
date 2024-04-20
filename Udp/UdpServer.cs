@@ -7,7 +7,7 @@ namespace ipk24chat_server.Udp;
 
 public class UdpServer
 {
-    private bool _stopServer = false; 
+    private bool _stopServer; 
     
     private UdpClient _welcomeClient = new UdpClient();
     private UdpClient _communicationClient = new UdpClient();
@@ -35,9 +35,9 @@ public class UdpServer
     {
         
         Task welcomeTask = HandleWelcomeClientsAsync(cancellationToken);
-        Task communicationTask = HandleCommunicationClientsAsync(cancellationToken);
+        Task communicationTask = Task.Run(() => HandleCommunicationClientsAsync(cancellationToken));
 
-        await Task.WhenAll(welcomeTask, communicationTask);
+        await welcomeTask;
     }
     
     private async Task HandleWelcomeClientsAsync(CancellationToken cancellationToken)
@@ -61,10 +61,11 @@ public class UdpServer
             }
 
             ClientMessage clientMessage = UdpPacker.Unpack(result.Buffer);
-            AbstractChatUser? user;
+            
+            // Creating a temp user object to check if the user is already connected
 
-            if (ChatUsers.TryGetUser(result.RemoteEndPoint, out user) && user != null)
-            {
+            if (ConnectedUsers.TryGetUser(result.RemoteEndPoint, out var user) && user != null)
+            {  // Existing user
                 if (user is UdpUser udpUser)
                 {
                     if (udpUser.HasReceivedMessageId(clientMessage.MessageId))
@@ -81,10 +82,10 @@ public class UdpServer
                     continue;
                 }
             }
-            else
+            else  // New user
             {
                 user = new UdpUser(result.RemoteEndPoint, _communicationClient, cancellationToken);
-                ChatUsers.AddUser(user.ConnectionEndPoint, user);
+                ConnectedUsers.AddUser(user.ConnectionEndPoint, user);
                 if (user is UdpUser newUser)
                 {
                     newUser.LastReceivedMessageId = (ushort)clientMessage.MessageId!;
@@ -100,28 +101,75 @@ public class UdpServer
             ClientMessageQueue.Queue.Add(new ClientMessageEnvelope(user, clientMessage));
         }
     }
-
-
+    
     private async Task HandleCommunicationClientsAsync(CancellationToken cancellationToken)
     {
         while (!_stopServer)
         {
-            // var result = await _communicationClient.ReceiveAsync();
-            // string receivedData = Encoding.UTF8.GetString(result.Buffer);
-            // Console.WriteLine($"Received communication message: {receivedData} from {result.RemoteEndPoint}");
-            //
-            // // Handle message from existing users
-            // if (ChatUsers.TryGetUser(result.RemoteEndPoint.ToString(), out var user))
-            // {
-            //     // Process message accordingly
-            //     ClientMessage clientMessage = UdpPacker.Unpack(receivedData);
-            //     ClientMessageQueue.Queue.Add(new ClientMessageEnvelope(user, clientMessage));
-            // }
+            UdpReceiveResult result;
+            try
+            {
+                result = await _communicationClient.ReceiveAsync();
+            }
+            catch (Exception)
+            {
+                continue;  // Skip to next iteration upon error
+            }
+
+            // Send a confirmation for non-confirm messages
+            if (result.Buffer[0] != ChatProtocol.MessageType.Confirm)
+            {
+                byte[] confirmMessage = { ChatProtocol.MessageType.Confirm, result.Buffer[1], result.Buffer[2] };
+                await _communicationClient.SendAsync(confirmMessage, confirmMessage.Length, result.RemoteEndPoint);
+            }
+
+            ClientMessage clientMessage = UdpPacker.Unpack(result.Buffer);
+            AbstractChatUser? user;
+
+            if (ConnectedUsers.TryGetUser(result.RemoteEndPoint, out user) && user is UdpUser udpUser)
+            {
+                // Correct user type and user found
+                if (clientMessage.Type == ChatProtocol.MessageType.Confirm)
+                {
+                    udpUser.ConfirmCollection.Add(new ConfirmMessage((ushort)clientMessage.MessageId!));
+                }
+                else
+                {
+                    if (udpUser.HasReceivedMessageId(clientMessage.MessageId))
+                    {
+                        continue;  // Ignore duplicated messages
+                    }
+                    udpUser.LastReceivedMessageId = (ushort)clientMessage.MessageId!;
+                }
+            }
+            else
+            {
+                // Handle non-UDP users or users not found
+                if (user != null)
+                {
+                    var errMessage = new ErrMessage("Server", $"Non-UDP user at {result.RemoteEndPoint} sent a UDP message.");
+                    await user.SendMessageAsync(errMessage);
+                    continue;
+                }
+                else
+                {
+                    // User was not found - handle as a new user for error message sending
+                    var tempUser = new UdpUser(result.RemoteEndPoint, _communicationClient, cancellationToken);
+                    var errMessage = new ErrMessage("Server", "Invalid or unauthenticated UDP user.");
+                    await tempUser.SendMessageAsync(errMessage);
+                    continue;
+                }
+            }
+
+            // Further handling for authenticated users
+            ClientMessageQueue.Queue.Add(new ClientMessageEnvelope(user, clientMessage));
         }
     }
-    
+
     public void Stop()
     {
         _stopServer = true;
+        _welcomeClient.Close();
+        _communicationClient.Close();
     }
 }
