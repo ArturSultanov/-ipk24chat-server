@@ -8,37 +8,6 @@ namespace ipk24chat_server;
 
 internal class Program
 {
-    // public static async Task Main(string[] args)
-    // {
-    //     try
-    //     {
-    //         // Parse the command line arguments
-    //         ArgumentParser parser = new ArgumentParser();
-    //         parser.ParseArguments(args);
-    //     }
-    //     catch (ArgumentException ex)
-    //     {
-    //         // Handle argument-related errors
-    //         Console.Error.WriteLine($"Error: {ex.Message}");
-    //         Console.WriteLine("Use -h for help on how to use the program.");
-    //         Environment.Exit(1); // Exit with a non-zero status to indicate an error
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         // Handle other unexpected errors
-    //         Console.Error.WriteLine($"Unexpected error: {ex.Message}");
-    //         Environment.Exit(99);
-    //     }
-    //     
-    //     // CancellationTokenSource is used to cancel the asynchronous operation.
-    //     CancellationTokenSource cts = new ();
-    //     Console.CancelKeyPress += (_, e) =>
-    //     {
-    //         e.Cancel = true;
-    //         cts.Cancel();
-    //     };
-    // }
-    
     public static async Task Main(string[] args)
     {
         CancellationTokenSource cts = new CancellationTokenSource();
@@ -49,6 +18,8 @@ internal class Program
             ArgumentParser parser = new ArgumentParser();
             parser.ParseArguments(args);
 
+            var chatMessagePrinter = new ChatMessagePrinter();
+            var messageProcessor = new ClientMessageProcessor();
             tcpServer = new TcpServer();
             udpServer = new UdpServer();
             try
@@ -67,20 +38,22 @@ internal class Program
             };
 
             Console.WriteLine("Starting TCP server...");
-            Task serverTask = tcpServer.StartTcpServerAsync(cts.Token, () => cts.Cancel());
-            // Add more tasks here.
             
-            await serverTask; // Shoudl wait for all tasks to complete 
+            Task tcpServerTask = tcpServer.StartTcpServerAsync(cts.Token, () => cts.Cancel());
+            Task udpServerTask = udpServer.StartUdpServerAsync(cts.Token);
+            Task messageProcessorTask = messageProcessor.ProcessMessagesAsync(cts.Token);
+            Task chatMessagePrinterTask = chatMessagePrinter.PrintMessagesAsync(cts.Token);
+            await Task.WhenAll(tcpServerTask, udpServerTask, messageProcessorTask, chatMessagePrinterTask);
         }
         catch (ArgumentException ex)
         {
-            Console.Error.WriteLine($"Error: {ex.Message}");
+            Console.Error.WriteLine($"ERR: {ex.Message}");
             Console.WriteLine("Use -h for help on how to use the program.");
-            Environment.Exit(1);
+            Environment.Exit(0);
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Unexpected error: {ex.Message}");
+            Console.Error.WriteLine($"ERR: {ex.Message}");
             Environment.Exit(99);
         }
         finally
@@ -98,7 +71,6 @@ internal class Program
             {
                 udpServer.Stop();
             }
-
         }
     }
 
@@ -106,7 +78,7 @@ internal class Program
     {
         Console.WriteLine("Sending 'bye' messages to all connected users...");
 
-        foreach (var user in ChatUsers.ConnectedUsers.Values)
+        foreach (var user in ConnectedUsers.UsersDict.Values)
         {
             try
             {
