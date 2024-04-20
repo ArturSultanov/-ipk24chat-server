@@ -43,7 +43,7 @@ namespace ipk24chat_server.Tcp
                     TcpClient.GetStream().Close();
                     TcpClient.Close();
                 }
-                ChatUsers.RemoveUser(ConnectionEndPoint);
+                ConnectedUsers.RemoveUser(ConnectionEndPoint);
             }
             catch (ArgumentNullException )
             {
@@ -54,7 +54,7 @@ namespace ipk24chat_server.Tcp
             // Tag the user messages with "DISCONNECTED", so they can be ignored in the message queue.
             ClientMessageQueue.TagUserMessages(this, "DISCONNECTED");
             
-            if (DisplayName != string.Empty && ChannelId != string.Empty)
+            if (DisplayName != string.Empty && ChannelId != string.Empty && !cancellationToken.IsCancellationRequested)
             {
                 var leftChannelMessage = new MsgMessage("Server", $"{DisplayName} has left {ChannelId}");
                 ChatMessagesQueue.Queue.Add(new ChatMessage(this, ChannelId, leftChannelMessage), cancellationToken);
