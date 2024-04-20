@@ -31,7 +31,7 @@ public class ChatMessagePrinter
     private async Task PrintMessageToChat(ChatMessage message, CancellationToken cancellationToken)
     {
         var tasks = new List<Task>();
-        foreach (var user in ChatUsers.ConnectedUsers.Values)
+        foreach (var user in ConnectedUsers.UsersDict.Values)
         {
             if (user != message.IgnoredUser && user.State == ClientState.State.Open && user.ChannelId == message.ChannelId)
             {

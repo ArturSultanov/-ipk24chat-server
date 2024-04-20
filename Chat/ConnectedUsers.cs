@@ -3,15 +3,15 @@ using System.Net;
 
 namespace ipk24chat_server.Chat;
 
-public static class ChatUsers
+public static class ConnectedUsers
 {
     // Assuming each user has a unique identifier, like a username or GUID
-    public static readonly ConcurrentDictionary<EndPoint, AbstractChatUser> ConnectedUsers = new ConcurrentDictionary<EndPoint, AbstractChatUser>();
+    public static readonly ConcurrentDictionary<EndPoint, AbstractChatUser> UsersDict = new ConcurrentDictionary<EndPoint, AbstractChatUser>();
     
     // Adding a user
     public static void AddUser(EndPoint endPoint, AbstractChatUser user)
     {
-        ConnectedUsers.TryAdd(endPoint, user);
+        UsersDict.TryAdd(endPoint, user);
     }
 
     // Removing a user
@@ -19,7 +19,7 @@ public static class ChatUsers
     {
         try
         {
-            return ConnectedUsers.TryRemove(endPoint, out _);
+            return UsersDict.TryRemove(endPoint, out _);
         }
         catch (Exception)
         {
@@ -31,7 +31,7 @@ public static class ChatUsers
     // Example of how to get a user if needed
     public static bool TryGetUser(EndPoint endPoint, out AbstractChatUser? user)
     {
-        return ConnectedUsers.TryGetValue(endPoint, out user);
+        return UsersDict.TryGetValue(endPoint, out user);
     }
     
 }

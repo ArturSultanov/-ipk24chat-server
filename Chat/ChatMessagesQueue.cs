@@ -5,5 +5,5 @@ namespace ipk24chat_server.Chat;
 
 public static class ChatMessagesQueue
 {
-    public static BlockingCollection<ChatMessage> Queue = new BlockingCollection<ChatMessage>(10000);
+    public static readonly BlockingCollection<ChatMessage> Queue = new BlockingCollection<ChatMessage>(10000);
 }
