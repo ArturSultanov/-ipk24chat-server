@@ -103,55 +103,67 @@ public class UdpPacker
         var type = reader.ReadByte();
         var messageId = ReadMessageId(reader);
 
-        switch (type)
+        try
         {
-            case ChatProtocol.MessageType.Auth:
-                return ParseAuthMessage(reader,messageId);
-            
-            case ChatProtocol.MessageType.Confirm:
-                return new ConfirmMessage(messageId);
-            
-            case ChatProtocol.MessageType.Msg:
-                return ParseMsgMessage(reader, messageId);
-            
-            case ChatProtocol.MessageType.Err:
-                return ParseErrMessage(reader, messageId);
-            
-            default:
-                return new UnknownMessage();
+            switch (type)
+            {
+                case ChatProtocol.MessageType.Auth:
+                    return ParseAuthMessage(reader, messageId);
+
+                case ChatProtocol.MessageType.Confirm:
+                    return new ConfirmMessage(messageId);
+
+                case ChatProtocol.MessageType.Msg:
+                    return ParseMsgMessage(reader, messageId);
+
+                case ChatProtocol.MessageType.Err:
+                    return ParseErrMessage(reader, messageId);
+
+                default:
+                    return new UnknownMessage();
                 //throw new NotSupportedException($"Unsupported message type: {type}");
+            }
+        }
+        catch (EndOfStreamException)
+        {
+            return new UnknownMessage();
         }
     }
     
-    private static AuthMessage ParseAuthMessage(BinaryReader reader, ushort messageId)
+    private static ClientMessage ParseAuthMessage(BinaryReader reader, ushort messageId)
     {
-        var username = ReadString(reader);
-        var displayName = ReadString(reader);
-        var secret = ReadString(reader);
-        return new AuthMessage(username, displayName, secret)
+        var username = ReadString(reader, ChatProtocol.MaxUsernameLength);
+        var displayName = ReadString(reader, ChatProtocol.MaxDisplayNameLength);
+        var secret = ReadString(reader, ChatProtocol.MaxSecretLength);
+        if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(displayName) || string.IsNullOrEmpty(secret))
         {
-            MessageId = messageId
-        };
+            return new UnknownMessage(); // Invalid AuthMessage due to missing or excessively long fields
+        }
+        return new AuthMessage(username, displayName, secret) { MessageId = messageId };
     } 
 
-    private static MsgMessage ParseMsgMessage(BinaryReader reader, ushort messageId)
+    private static ClientMessage ParseMsgMessage(BinaryReader reader, ushort messageId)
     {
-        var displayName = ReadString(reader);
-        var messageContent = ReadString(reader);
-        return new MsgMessage(displayName, messageContent)
+        var displayName = ReadString(reader, ChatProtocol.MaxDisplayNameLength);
+        var messageContent = ReadString(reader, ChatProtocol.MaxMessageContentLength);
+        
+        if (string.IsNullOrEmpty(displayName) || string.IsNullOrEmpty(messageContent))
         {
-            MessageId = messageId
-        };
+            return new UnknownMessage(); // Invalid AuthMessage due to missing or excessively long fields
+        }
+        return new MsgMessage(displayName, messageContent) { MessageId = messageId };
     }
     
-    private static ErrMessage ParseErrMessage(BinaryReader reader, ushort messageId)
+    private static ClientMessage ParseErrMessage(BinaryReader reader, ushort messageId)
     {
-        var displayName = ReadString(reader);
-        var messageContent = ReadString(reader);
-        return new ErrMessage(displayName, messageContent)
+        var displayName = ReadString(reader, ChatProtocol.MaxDisplayNameLength);
+        var messageContent = ReadString(reader, ChatProtocol.MaxMessageContentLength);
+        
+        if (string.IsNullOrEmpty(displayName) || string.IsNullOrEmpty(messageContent))
         {
-            MessageId = messageId
-        };
+            return new UnknownMessage(); // Invalid AuthMessage due to missing or excessively long fields
+        }
+        return new ErrMessage(displayName, messageContent) { MessageId = messageId };
     }
     
     private static ushort ReadMessageId(BinaryReader reader)
@@ -164,13 +176,14 @@ public class UdpPacker
         return BitConverter.ToUInt16(messageIdBytes, 0);
     }
 
-    private static string ReadString(BinaryReader reader)
+    private static string ReadString(BinaryReader reader, int maxLength)
     {
         var stringBytes = new List<byte>();
         byte currentByte;
-        while ((currentByte = reader.ReadByte()) != 0) // Assuming null-terminated strings
+        while ((currentByte = reader.ReadByte()) != 0)
         {
             stringBytes.Add(currentByte);
+            if (stringBytes.Count > maxLength) throw new EndOfStreamException("String exceeds maximum allowed length.");
         }
         return Encoding.ASCII.GetString(stringBytes.ToArray());
     }
