@@ -52,7 +52,7 @@ public class ChatMessagePrinter
             user.State = ClientState.State.Error;
             
             // Disconnect the client, don't need to send bye, because the client is unreachable
-            await user.ClientDisconnect(); 
+            await user.ClientDisconnect(cancellationToken); 
         }
     }
 }

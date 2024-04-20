@@ -47,8 +47,8 @@ public abstract class AbstractChatUser(EndPoint endPoint)
     }
     
     public abstract Task SendMessageAsync(ClientMessage message); // Abstract method to send message to the user
-    public abstract Task ClientDisconnect();    // Abstract method to close the client
-    public abstract ushort? LastSentMessageId();    // Abstract method to get the message id (Udp only, null for Tcp)
+    public abstract Task ClientDisconnect(CancellationToken cancellationToken);    // Abstract method to close the client
+    public abstract ushort? GetMessageIdToSend();    // Abstract method to get the message id (Udp only, null for Tcp)
 
     public void UpdateUserDetails(string username, string displayName, string secret)
     {

@@ -154,7 +154,7 @@ public class TcpServer()
             // user.TcpClient.Close();
             // // Removing the user from the dictionary
             // ChatUsers.ConnectedUsers.TryRemove(user.ConnectionEndPoint, out _);
-            await user.ClientDisconnect();
+            await user.ClientDisconnect(cancellationToken);
         }
     }
 

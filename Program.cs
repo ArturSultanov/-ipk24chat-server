@@ -2,6 +2,7 @@
 using ipk24chat_server.Client;
 using ipk24chat_server.System;
 using ipk24chat_server.Tcp;
+using ipk24chat_server.Udp;
 
 namespace ipk24chat_server;
 
@@ -42,13 +43,22 @@ internal class Program
     {
         CancellationTokenSource cts = new CancellationTokenSource();
         TcpServer? tcpServer = null;
-
+        UdpServer? udpServer = null;
         try
         {
             ArgumentParser parser = new ArgumentParser();
             parser.ParseArguments(args);
 
             tcpServer = new TcpServer();
+            udpServer = new UdpServer();
+            try
+            {
+                udpServer.ChatConnect();
+            }
+            catch (Exception)
+            {
+                throw;
+            }
 
             Console.CancelKeyPress += (_, e) => {
                 e.Cancel = true;
@@ -75,19 +85,24 @@ internal class Program
         }
         finally
         {
+            Console.WriteLine("Server has been stopped.");
+            await SendByeToAllUsers(cancellationToken: cts.Token);
+            
             // Perform final cleanup before exiting
             if (tcpServer != null)
             {
-                
                 tcpServer.Stop(); // Assuming a Stop method that closes the listener
             }
-            
-            Console.WriteLine("Server has been stopped.");
-            await SendByeToAllUsers();
+
+            if (udpServer!= null)
+            {
+                udpServer.Stop();
+            }
+
         }
     }
 
-    private static async Task SendByeToAllUsers()
+    private static async Task SendByeToAllUsers(CancellationToken cancellationToken)
     {
         Console.WriteLine("Sending 'bye' messages to all connected users...");
 
@@ -96,7 +111,7 @@ internal class Program
             try
             {
                 await user.SendMessageAsync(new ByeMessage());
-                await user.ClientDisconnect(); // Assuming this method closes the client connection gracefully
+                await user.ClientDisconnect(cancellationToken); // Assuming this method closes the client connection gracefully
             }
             catch (Exception ex)
             {

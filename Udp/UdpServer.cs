@@ -83,7 +83,7 @@ public class UdpServer
             }
             else
             {
-                user = new UdpUser(result.RemoteEndPoint);
+                user = new UdpUser(result.RemoteEndPoint, _communicationClient, cancellationToken);
                 ChatUsers.AddUser(user.ConnectionEndPoint, user);
                 if (user is UdpUser newUser)
                 {
@@ -120,5 +120,8 @@ public class UdpServer
         }
     }
     
-    
+    public void Stop()
+    {
+        _stopServer = true;
+    }
 }

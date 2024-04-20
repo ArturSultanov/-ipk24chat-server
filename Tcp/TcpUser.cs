@@ -34,7 +34,7 @@ namespace ipk24chat_server.Tcp
                 throw;
             }
         }
-        public override Task ClientDisconnect()
+        public override Task ClientDisconnect(CancellationToken cancellationToken)
         {
             try
             {
@@ -54,11 +54,17 @@ namespace ipk24chat_server.Tcp
             // Tag the user messages with "DISCONNECTED", so they can be ignored in the message queue.
             ClientMessageQueue.TagUserMessages(this, "DISCONNECTED");
             
+            if (DisplayName != string.Empty && ChannelId != string.Empty)
+            {
+                var leftChannelMessage = new MsgMessage("Server", $"{DisplayName} has left {ChannelId}");
+                ChatMessagesQueue.Queue.Add(new ChatMessage(this, ChannelId, leftChannelMessage), cancellationToken);
+            }
+            
             return Task.CompletedTask;
         }
 
         
-        public override ushort? LastSentMessageId()
+        public override ushort? GetMessageIdToSend()
         {
             return null;
         }

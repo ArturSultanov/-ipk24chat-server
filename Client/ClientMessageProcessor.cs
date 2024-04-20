@@ -73,7 +73,7 @@ public class ClientMessageProcessor
         }
         catch (Exception)
         {
-            await user.ClientDisconnect();
+            await user.ClientDisconnect(cancellationToken);
             return;
         }
         
@@ -138,13 +138,6 @@ public class ClientMessageProcessor
     private async Task HandleByeMessage(AbstractChatUser user, CancellationToken cancellationToken)
     {
         user.State = ClientState.State.End;
-        
-        if (user.DisplayName != string.Empty && user.ChannelId != string.Empty)
-        {
-            var leftChannelMessage = new MsgMessage("Server", $"{user.DisplayName} has left {user.ChannelId}");
-            ChatMessagesQueue.Queue.Add(new ChatMessage(user, user.ChannelId, leftChannelMessage), cancellationToken);
-        }
-        
-        await user.ClientDisconnect();
+        await user.ClientDisconnect(cancellationToken);
     }
 }
