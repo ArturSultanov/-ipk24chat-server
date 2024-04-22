@@ -34,13 +34,13 @@ make
 ```
 
 ### Usage
-The following command will start the program:
+The following command will run the server:
 
 ```bash
 ./ipk24chat-server [-l <listening Ip>] [-p <listening port>] [-d <timeout>] [-r <retries>]
 ```
 
-Run the server application using the generated executable. Here is an example of how to start the server with custom IP and port:
+Here is an example of how to start the server with custom IP and port:
 
 ```bash
 ./ipk24chat-server -l 192.168.1.5 -p 4567
@@ -48,11 +48,12 @@ Run the server application using the generated executable. Here is an example of
 
 ## Theoretical Background
 
-Understanding the core differences between the Transmission Control Protocol (TCP) and the User Datagram Protocol (UDP) is essential for grasping network communication concepts. Both protocols serve the purpose of sending data over the internet, but they operate differently.
+Understanding the core differences between the Transmission Control Protocol (TCP) [RFC793] and the User Datagram Protocol (UDP) [RFC768] is essential for grasping network communication concepts. 
+Both protocols serve the purpose of sending data over the internet, but they operate differently.
 
 ### Transmission Control Protocol (TCP)
 
-TCP is a connection-oriented and reliable protocol. It guarantees the ordered delivery of data as it was sent. This reliability is achieved through a series of mechanisms:
+TCP is a connection-oriented and reliable protocol[StevensTCP]. It guarantees the ordered delivery of data as it was sent. This reliability is achieved through a series of mechanisms:
 
 - **Connection Establishment**: TCP establishes a connection using a handshake process, ensuring both parties are ready to communicate.
 - **Data Sequencing**: Each byte of data sent over a TCP connection is numbered, which allows the receiver to reassemble data in the correct order.
@@ -67,13 +68,13 @@ In TCP, the data stream is a sequence of bytes, which means that a read operatio
 
 ### User Datagram Protocol (UDP)
 
-In contrast, UDP is a connectionless and unreliable protocol. It does not establish a connection before sending data and does not guarantee message delivery. The key characteristics include:
+In contrast, UDP is a connectionless and unreliable protocol[UDPAuburn]. It does not establish a connection before sending data and does not guarantee message delivery. The key characteristics include:
 
 - **No Connection Overhead**: UDP does not perform a handshake, making it faster for scenarios where speed is prioritized over reliability.
 - **No Intrinsic Order**: Messages (datagrams) might arrive out of order, or not at all, and it's up to the application to handle these scenarios.
 - **No Acknowledgments**: UDP does not have an acknowledgment mechanism for sent datagrams, and senders are unaware if their messages reach the destination.
 
-UDP handles messages independently from one another:
+UDP handles messages independently of one another:
 
 - Every read from a UDP socket retrieves exactly one message as it was sent. The protocol ensures that messages are isolated; a read operation will never return a partial message or multiple messages at once.
 - Because of its stateless nature, UDP is often used in streaming, gaming, and any application where the timely arrival of data is more crucial than its absolute reliability.
@@ -84,7 +85,12 @@ The choice between TCP and UDP depends on the requirements of the application. T
 
 In the IPK24-CHAT server application, the implementation of both TCP and UDP allows the server to cater to clients that prioritize reliability (TCP) as well as those that require less overhead and potentially faster communication (UDP).
 
-## Project Structure
+
+## Project Overview
+My purpose was to design the chat server application which can handle multiple clients simultaneously over both (TCP and UDP) protocols, providing robust chat functionality, including real-time messaging and session management. 
+It’s structured to be highly modular and scalable, with clear separations of concerns among handling connections, processing messages, managing user sessions, and handling system-wide settings and user commands.
+
+### Project Structure
 
 The IPK24-CHAT Server project is organized into a set of folders and files that each play a specific role in the functionality of the application. Below is the hierarchy and description of the key components of the project:
 
@@ -152,215 +158,6 @@ This section outlines the key classes within the IPK24-CHAT Server application, 
 The following diagram illustrates the relationships between the classes in the IPK24-CHAT Server application:
 
 ![Class Diagram](./Diagrams/class.svg)
-
-
-
-## Testing:
-
-### Telnet Check:
-To check the server is running, I used the telnet command.
-
-```bash
-[xsulta01@ipk24 ~/test-client/ipk24chat-client]$ telnet 0.0.0.0 4567
-Trying 0.0.0.0...
-Connected to 0.0.0.0.
-Escape character is '^]'.
-```
-As we can see, the server is running and accepting connections.
-
-### Wireshack Check:
-To check the server sends messages in the right `IPK24-CHAT` protocol format, I used the Wireshark tool.  
-I tested program using `/ipk24-chat.lua.` lua extension the was provided by Instructors.
-
-
-
-### Chat-client from project 1:
-
-Also for testing the server, I used the chat-client from project 1.
-In scenarios below I tried to demonstrate the TCP-client, UDP-client, and Server communication.
-
-#### One user TCP Connection user:
-
-The TCP-client input:
-
-```bash
-[xsulta01@ipk24 ~/test-client/ipk24chat-client]$ ./ipk24chat-client -t tcp -s localhost
-Enter commands:
-/auth user1 User1 secret 
-Success: Successfully authenticated
-Hello World!
-/join 1
-Success: Successfully joined 1.
-Server: secret has joined 1
-```
-
-Server logs:
-
-```bash
-[xsulta01@ipk24 ~/RiderProjects/ipk24chat-server]$ ./ipk24chat-server 
-RECV 127.0.0.1:35716 | AUTH
-SENT 127.0.0.1:35716 | REPLY
-RECV 127.0.0.1:35716 | MSG
-RECV 127.0.0.1:35716 | JOIN
-SENT 127.0.0.1:35716 | REPLY
-SENT 127.0.0.1:35716 | MSG
-```
-
-#### One user UDP Connection user:
-
-The UDP-client input:
-
-```bash
-[xsulta01@ipk24 ~/test-client/ipk24chat-client]$ ./ipk24chat-client -t udp -s localhost
-Enter commands:
-/auth user2 User2 secret 
-Success: Successfully authenticated
-Hello World!
-/join 1
-Success: Successfully joined 1.
-Server: secret has joined 1
-```
-
-Server logs:
-
-```bash
-[xsulta01@ipk24 ~/RiderProjects/ipk24chat-server]$ ./ipk24chat-server 
-SENT 127.0.0.1:37062 | CONFIRM
-RECV 127.0.0.1:37062 | AUTH
-SENT 127.0.0.1:37062 | REPLY
-RECV 127.0.0.1:37062 | CONFIRM
-RECV 127.0.0.1:37062 | MSG
-SENT 127.0.0.1:37062 | CONFIRM
-RECV 127.0.0.1:37062 | JOIN
-SENT 127.0.0.1:37062 | CONFIRM
-SENT 127.0.0.1:37062 | REPLY
-RECV 127.0.0.1:37062 | CONFIRM
-SENT 127.0.0.1:37062 | MSG
-RECV 127.0.0.1:37062 | CONFIRM
-```
-
-#### TCP and UDP clients communication:
-
-The TCP-client input:
-
-```bash
-[xsulta01@ipk24 ~/test-client/ipk24chat-client]$ ./ipk24chat-client -t tcp -s localhost
-Enter commands:
-/auth user1 password User1_Tom
-Success: Successfully authenticated
-Server: User2_Sam has joined default
-Hi, Sam! How are you doing!
-User2_Sam: Hi, Tom! I'am testing chat-server.
-```
-
-The UDP-client input:
-
-```bash
-[xsulta01@ipk24 ~/test-client/ipk24chat-client]$ ./ipk24chat-client -t udp -s localhost
-Enter commands:
-/auth user2 12345678 User2_Sam
-Success: Successfully authenticated
-User1_Tom: Hi, Sam! How are you doing!
-Hi, Tom! I'am testing chat-server.      
-```
-
-Server logs:
-
-```bash
-[xsulta01@ipk24 ~/RiderProjects/ipk24chat-server]$ ./ipk24chat-server 
-RECV 127.0.0.1:58976 | AUTH
-SENT 127.0.0.1:58976 | REPLY
-SENT 127.0.0.1:50161 | CONFIRM
-RECV 127.0.0.1:50161 | AUTH
-SENT 127.0.0.1:50161 | REPLY
-RECV 127.0.0.1:50161 | CONFIRM
-SENT 127.0.0.1:58976 | MSG
-RECV 127.0.0.1:58976 | MSG
-SENT 127.0.0.1:50161 | MSG
-RECV 127.0.0.1:50161 | CONFIRM
-RECV 127.0.0.1:50161 | MSG
-SENT 127.0.0.1:50161 | CONFIRM
-SENT 127.0.0.1:58976 | MSG
-```
-
-#### TCP and UDP clients communication in diffrent channels:
-The TCP-client input:
-
-```bash
-/join 1
-Success: Successfully joined 1.
-Server: User1_Tom has joined 1
-Server: User2_Sam has joined 1
-User2_Sam: Oh, hi Tom! Did know that you at the channel 1 :)
-Yeah, I am here
-```
-The UDP-client input:
-
-```bash
-Server: User1_Tom has left default
-Tom, did you leave the chanel?
-Okay :(
-/join 1
-Success: Successfully joined 1.
-Server: User2_Sam has joined 1
-Oh, hi Tom! Did know that you at the channel 1 :)
-User1_Tom: Yeah, I am here
-```
-
-Server logs:
-
-```bash
-RECV 127.0.0.1:58976 | JOIN
-SENT 127.0.0.1:50161 | MSG
-SENT 127.0.0.1:58976 | REPLY
-RECV 127.0.0.1:50161 | CONFIRM
-SENT 127.0.0.1:58976 | MSG
-RECV 127.0.0.1:50161 | MSG
-SENT 127.0.0.1:50161 | CONFIRM
-RECV 127.0.0.1:50161 | MSG
-SENT 127.0.0.1:50161 | CONFIRM
-RECV 127.0.0.1:50161 | JOIN
-SENT 127.0.0.1:50161 | CONFIRM
-SENT 127.0.0.1:50161 | MSG
-SENT 127.0.0.1:50161 | REPLY
-RECV 127.0.0.1:50161 | CONFIRM
-SENT 127.0.0.1:50161 | MSG
-RECV 127.0.0.1:50161 | CONFIRM
-RECV 127.0.0.1:50161 | CONFIRM
-SENT 127.0.0.1:50161 | REPLY
-SENT 127.0.0.1:58976 | MSG
-RECV 127.0.0.1:50161 | CONFIRM
-RECV 127.0.0.1:50161 | MSG
-SENT 127.0.0.1:50161 | CONFIRM
-SENT 127.0.0.1:58976 | MSG
-RECV 127.0.0.1:58976 | MSG
-SENT 127.0.0.1:50161 | MSG
-RECV 127.0.0.1:50161 | CONFIRM
-```
-
-#### Handling of the user leaving::
-The TCP-client input:
-
-```bash
-User2_Sam: Sorry, Sam, have a thing to do... Bye!
-Server: User2_Sam has left 1
-```
-The UDP-client input:
-
-```bash
-Sorry, Sam, have a thing to do... Bye!
-[xsulta01@ipk24 ~/test-client/ipk24chat-client]$ 
-```
-
-Server logs:
-
-```bash
-RECV 127.0.0.1:50161 | MSG
-SENT 127.0.0.1:50161 | CONFIRM
-SENT 127.0.0.1:58976 | MSG
-RECV 127.0.0.1:50161 | BYE
-SENT 127.0.0.1:50161 | CONFIRM
-```
 
 ### Chat Namespace
 
@@ -456,23 +253,271 @@ SENT 127.0.0.1:50161 | CONFIRM
 - **Responsibilities**: Corresponds to a UDP-connected client, facilitating stateless message sending and reception.
 - **Communication**: Inherits from `AbstractChatUser` and interfaces with `UdpPacker` for message handling.
 
+## Testing:
+
+### Telnet Check:
+
+To verify that the server is operational and accepting connections, the `telnet` command was used:
+
+```bash
+[xsulta01@ipk24 ~/test-client/ipk24chat-client]$ telnet 0.0.0.0 4567
+Trying 0.0.0.0...
+Connected to 0.0.0.0.
+Escape character is '^]'.
+```
+This output confirms that the server is actively running and capable of accepting client connections.
+
+### Wireshack Check:
+
+For validating that the server adheres to the `IPK24-CHAT` protocol specifications when sending messages, 
+Wireshark was employed along with a custom Lua dissector script `ipk24-chat.lua` provided by the Instructors.  
+The following table captures sample network traffic, demonstrating the server's protocol compliance:
+
+| No.  | Time          | Source    | Destination | Protocol   | Length | Info                                                                          |
+|------|---------------|-----------|-------------|------------|--------|-------------------------------------------------------------------------------|
+| 723  | 19.947938717  | 127.0.0.1 | 127.0.0.1   | IPK24-CHAT | 104    | C → Server \| AUTH user1 AS User1 USING password                              |
+| 725  | 19.962308840  | 127.0.0.1 | 127.0.0.1   | IPK24-CHAT | 108    | Server → C \| REPLY OK IS Successfully authenticated                          |
+| 2838 | 81.105037935  | 127.0.0.1 | 127.0.0.1   | IPK24-CHAT | 68     | C → Server \| ID=0, Type=auth, UserName=user2, Secret=12345678                |
+| 2839 | 81.107317150  | 127.0.0.1 | 127.0.0.1   | IPK24-CHAT | 47     | Server → C \| Type=confirm, RefID=0                                           |
+| 2840 | 81.112315824  | 127.0.0.1 | 127.0.0.1   | IPK24-CHAT | 77     | Server → C \| ID=0, Type=reply, Result=OK, Content=Successfully authenticated |
+| 2841 | 81.115786340  | 127.0.0.1 | 127.0.0.1   | IPK24-CHAT | 47     | C → Server \| Type=confirm, RefID=0                                           |
+| 2842 | 81.118242753  | 127.0.0.1 | 127.0.0.1   | IPK24-CHAT | 113    | Server → C \| MSG FROM Server IS User2 has joined default                     |
+| 3497 | 98.488027305  | 127.0.0.1 | 127.0.0.1   | IPK24-CHAT | 66     | C → Server \| ID=1, Type=msg, DisplayName=User2, Content=Hi everyone!         |
+| 3498 | 98.488634705  | 127.0.0.1 | 127.0.0.1   | IPK24-CHAT | 47     | Server → C \| Type=confirm, RefID=1                                           |
+| 3499 | 98.489548411  | 127.0.0.1 | 127.0.0.1   | IPK24-CHAT | 100    | Server → C \| MSG FROM User2 IS Hi everyone!                                  |
+| 3855 | 109.056336200 | 127.0.0.1 | 127.0.0.1   | IPK24-CHAT | 98     | C → Server \| MSG FROM User1 IS Hi, User2!                                    |
+| 3856 | 109.057906269 | 127.0.0.1 | 127.0.0.1   | IPK24-CHAT | 64     | Server → C \| ID=1, Type=msg, DisplayName=User1, Content=Hi, User2!           |
+| 3857 | 109.058284992 | 127.0.0.1 | 127.0.0.1   | IPK24-CHAT | 47     | C → Server \| Type=confirm, RefID=1                                           |
+| 9337 | 231.263997026 | 127.0.0.1 | 127.0.0.1   | IPK24-CHAT | 58     | C → Server \| ID=2, Type=msg, DisplayName=User2, Content=Bye!                 |
+| 9338 | 231.264598186 | 127.0.0.1 | 127.0.0.1   | IPK24-CHAT | 47     | Server → C \| Type=confirm, RefID=2                                           |
+| 9339 | 231.264742919 | 127.0.0.1 | 127.0.0.1   | IPK24-CHAT | 92     | Server → C \| MSG FROM User2 IS Bye!                                          |
+| 9465 | 233.049459742 | 127.0.0.1 | 127.0.0.1   | IPK24-CHAT | 47     | C → Server \| ID=3, Type=bye                                                  |
+| 9466 | 233.050027349 | 127.0.0.1 | 127.0.0.1   | IPK24-CHAT | 47     | Server → C \| Type=confirm, RefID=3                                           |
+| 9467 | 233.052001672 | 127.0.0.1 | 127.0.0.1   | IPK24-CHAT | 111    | Server → C \| MSG FROM Server IS User2 has left default                       |
+
+
+### Testing with Chat-client from Project 1:
+
+The server was further tested using the **[ipk24chat-client](https://git.fit.vutbr.cz/xsulta01/ipk24chat-client)** from project 1. 
+This client allows for simulation of both TCP and UDP communications, providing a comprehensive test environment.
+
+#### One user TCP Connection user:
+
+**The TCP-client input:**
+
+```bash
+[xsulta01@ipk24 ~/test-client/ipk24chat-client]$ ./ipk24chat-client -t tcp -s localhost
+Enter commands:
+/auth user1 User1 secret 
+Success: Successfully authenticated
+Hello World!
+/join 1
+Success: Successfully joined 1.
+Server: secret has joined 1
+```
+
+**Server logs:**
+
+```bash
+[xsulta01@ipk24 ~/RiderProjects/ipk24chat-server]$ ./ipk24chat-server 
+RECV 127.0.0.1:35716 | AUTH
+SENT 127.0.0.1:35716 | REPLY
+RECV 127.0.0.1:35716 | MSG
+RECV 127.0.0.1:35716 | JOIN
+SENT 127.0.0.1:35716 | REPLY
+SENT 127.0.0.1:35716 | MSG
+```
+
+#### One user UDP Connection user:
+
+**The UDP-client input:**
+
+```bash
+[xsulta01@ipk24 ~/test-client/ipk24chat-client]$ ./ipk24chat-client -t udp -s localhost
+Enter commands:
+/auth user2 User2 secret 
+Success: Successfully authenticated
+Hello World!
+/join 1
+Success: Successfully joined 1.
+Server: secret has joined 1
+```
+
+**Server logs:**
+
+```bash
+[xsulta01@ipk24 ~/RiderProjects/ipk24chat-server]$ ./ipk24chat-server 
+SENT 127.0.0.1:37062 | CONFIRM
+RECV 127.0.0.1:37062 | AUTH
+SENT 127.0.0.1:37062 | REPLY
+RECV 127.0.0.1:37062 | CONFIRM
+RECV 127.0.0.1:37062 | MSG
+SENT 127.0.0.1:37062 | CONFIRM
+RECV 127.0.0.1:37062 | JOIN
+SENT 127.0.0.1:37062 | CONFIRM
+SENT 127.0.0.1:37062 | REPLY
+RECV 127.0.0.1:37062 | CONFIRM
+SENT 127.0.0.1:37062 | MSG
+RECV 127.0.0.1:37062 | CONFIRM
+```
+
+#### TCP and UDP clients communication:
+
+**The TCP-client input:**
+
+```bash
+[xsulta01@ipk24 ~/test-client/ipk24chat-client]$ ./ipk24chat-client -t tcp -s localhost
+Enter commands:
+/auth user1 password User1_Tom
+Success: Successfully authenticated
+Server: User2_Sam has joined default
+Hi, Sam! How are you doing!
+User2_Sam: Hi, Tom! I'am testing chat-server.
+```
+
+**The UDP-client input:**
+
+```bash
+[xsulta01@ipk24 ~/test-client/ipk24chat-client]$ ./ipk24chat-client -t udp -s localhost
+Enter commands:
+/auth user2 12345678 User2_Sam
+Success: Successfully authenticated
+User1_Tom: Hi, Sam! How are you doing!
+Hi, Tom! I'am testing chat-server.      
+```
+
+**Server logs:**
+
+```bash
+[xsulta01@ipk24 ~/RiderProjects/ipk24chat-server]$ ./ipk24chat-server 
+RECV 127.0.0.1:58976 | AUTH
+SENT 127.0.0.1:58976 | REPLY
+SENT 127.0.0.1:50161 | CONFIRM
+RECV 127.0.0.1:50161 | AUTH
+SENT 127.0.0.1:50161 | REPLY
+RECV 127.0.0.1:50161 | CONFIRM
+SENT 127.0.0.1:58976 | MSG
+RECV 127.0.0.1:58976 | MSG
+SENT 127.0.0.1:50161 | MSG
+RECV 127.0.0.1:50161 | CONFIRM
+RECV 127.0.0.1:50161 | MSG
+SENT 127.0.0.1:50161 | CONFIRM
+SENT 127.0.0.1:58976 | MSG
+```
+
+#### TCP and UDP clients communication in different channels:
+
+**The TCP-client input:**
+
+```bash
+/join 1
+Success: Successfully joined 1.
+Server: User1_Tom has joined 1
+Server: User2_Sam has joined 1
+User2_Sam: Oh, hi Tom! Did know that you at the channel 1 :)
+Yeah, I am here
+```
+**The UDP-client input:**
+
+```bash
+Server: User1_Tom has left default
+Tom, did you leave the chanel?
+Okay :(
+/join 1
+Success: Successfully joined 1.
+Server: User2_Sam has joined 1
+Oh, hi Tom! Did know that you at the channel 1 :)
+User1_Tom: Yeah, I am here
+```
+
+**Server logs:**
+
+```bash
+RECV 127.0.0.1:58976 | JOIN
+SENT 127.0.0.1:50161 | MSG
+SENT 127.0.0.1:58976 | REPLY
+RECV 127.0.0.1:50161 | CONFIRM
+SENT 127.0.0.1:58976 | MSG
+RECV 127.0.0.1:50161 | MSG
+SENT 127.0.0.1:50161 | CONFIRM
+RECV 127.0.0.1:50161 | MSG
+SENT 127.0.0.1:50161 | CONFIRM
+RECV 127.0.0.1:50161 | JOIN
+SENT 127.0.0.1:50161 | CONFIRM
+SENT 127.0.0.1:50161 | MSG
+SENT 127.0.0.1:50161 | REPLY
+RECV 127.0.0.1:50161 | CONFIRM
+SENT 127.0.0.1:50161 | MSG
+RECV 127.0.0.1:50161 | CONFIRM
+RECV 127.0.0.1:50161 | CONFIRM
+SENT 127.0.0.1:50161 | REPLY
+SENT 127.0.0.1:58976 | MSG
+RECV 127.0.0.1:50161 | CONFIRM
+RECV 127.0.0.1:50161 | MSG
+SENT 127.0.0.1:50161 | CONFIRM
+SENT 127.0.0.1:58976 | MSG
+RECV 127.0.0.1:58976 | MSG
+SENT 127.0.0.1:50161 | MSG
+RECV 127.0.0.1:50161 | CONFIRM
+```
+
+#### Handling of the user leaving::
+
+**The TCP-client input:**
+
+```bash
+User2_Sam: Sorry, Sam, have a thing to do... Bye!
+Server: User2_Sam has left 1
+```
+**The UDP-client input:**
+
+```bash
+Sorry, Sam, have a thing to do... Bye!
+[xsulta01@ipk24 ~/test-client/ipk24chat-client]$ 
+```
+
+**Server logs:**
+
+```bash
+RECV 127.0.0.1:50161 | MSG
+SENT 127.0.0.1:50161 | CONFIRM
+SENT 127.0.0.1:58976 | MSG
+RECV 127.0.0.1:50161 | BYE
+SENT 127.0.0.1:50161 | CONFIRM
+```
+
+### Summary
+The tests conducted provide a broad validation of the server’s ability to handle different communication protocols and adhere to the IPK24-CHAT protocol. 
+Both low-level connectivity tests using Telnet and protocol-specific message format checks using Wireshark have confirmed the server's operational effectiveness and compliance with the required standards.
+
+
+### Conclusion
+
+The IPK24-CHAT Server, developed as IPK Project 2 - IOTA, is a comprehensive chat server application constructed using .NET 8. 
+It has been intricately designed to support real-time text communication across the internet, handling both TCP and UDP protocols with finesse. 
+This server manages multiple client connections simultaneously.
+The application is capable of processing and conforming to the `IPK24-CHAT` protocol messages which include operations such as user authentication `AUTH`, joining channels `JOIN`, message exchanges `MSG`, error handling `ERR`, gracefully terminating sessions `BYE`, and confirmation messages `CONFIRM` for UDP purposes. 
+Through these functionalities, it ensures a dynamic interaction environment where clients can seamlessly join or leave chat channels, exchange messages in real-time, and perform all these actions under the guidance of a well-defined finite state machine (FSM).
+The server's implementation demonstrates a strong understanding of network programming principles, including the nuanced differences between TCP and UDP protocols. 
+This knowledge is crucial as it influences the choice of protocol based on the application requirements—TCP for reliability and order, UDP for efficiency and lower overhead.
+
 ## Bibliography
 
-[NetworkProgramming.NET] "Network programming in .NET - .NET | Microsoft Learn." Microsoft. [Online]. Available at: https://learn.microsoft.com/en-us/dotnet/framework/network-programming.
+[NetworkProgramming.NET]: "Network programming in .NET - .NET | Microsoft Learn." Microsoft. [Online]. Available at: https://learn.microsoft.com/en-us/dotnet/framework/network-programming
+
+[NmapEssentials]: Shaw, David. *Nmap Essentials*. Released May 2015. Publisher(s): Packt Publishing. ISBN: 9781783554065. Available at: https://github.com/jidibinlin/Free-DevOps-Books-1/blob/master/book/Nmap%20Essentials.pdf
 
 [StevensTCP]: Stevens, W. Richard. *TCP/IP Illustrated, Volume 1: The Protocols*. Addison-Wesley, 1994. [Online]. Available at: https://www.r-5.org/files/books/computers/internals/net/Richard_Stevens-TCP-IP_Illustrated-EN.pdf
 
-[TcpClientTcpListener] "Use TcpClient and TcpListener - .NET | Microsoft Learn." Microsoft. [Online]. Available at: https://learn.microsoft.com/en-us/dotnet/framework/network-programming/tcp-client-and-tcp-listener;.
+[UDPAuburn]: Malinowski, Aleksander, Bradley University, and Wilamowski, Bogdan M., Auburn University. *User Datagram Protocol—UDP*. Referenced in [STD6,C02-1,F10,GW03,PD07]. Available at: [https://www.eng.auburn.edu/~wilambm/pap/2011/K10148_C059.pdf](https://www.eng.auburn.edu/~wilambm/pap/2011/K10148_C059.pdf)
 
-[UsingUDP] "Using UDP Services - .NET Framework | Microsoft Learn." Microsoft. [Online]. Available at: https://learn.microsoft.com/en-us/dotnet/framework/network-programming/using-udp-services.
+[TcpClientTcpListener]: "Use TcpClient and TcpListener - .NET | Microsoft Learn." Microsoft. [Online]. Available at: https://learn.microsoft.com/en-us/dotnet/fundamentals/networking/sockets/tcp-classes
 
-[UdpClientClass] "UdpClient Class (System.Net.Sockets) | Microsoft Learn." Microsoft. [Online]. Available at: https://learn.microsoft.com/en-us/dotnet/api/system.net.sockets.udpclient?view=netframework-4.8;.
+[UsingUDP]: "Using UDP Services - .NET Framework | Microsoft Learn." Microsoft. [Online]. Available at: https://learn.microsoft.com/en-us/dotnet/framework/network-programming/using-udp-services
 
-[MicrosoftDocs] Microsoft. TCP/IP Client and Server [online]. Microsoft Docs. [cited 2023-04-30]. Available at: https://docs.microsoft.com/en-us/dotnet/framework/network-programming/tcp-ip-client-and-server
+[UdpClientClass]: "UdpClient Class (System.Net.Sockets) | Microsoft Learn." Microsoft. [Online]. Available at: https://learn.microsoft.com/en-us/dotnet/api/system.net.sockets.udpclient?view=netframework-4.8
 
-[MicrosoftDocs] Microsoft. Using UDP Services [online]. Microsoft Docs. [cited 2023-04-30]. Available at: https://docs.microsoft.com/en-us/dotnet/framework/network-programming/using-udp-services
+[RFC768]: Postel, J. User Datagram Protocol [online]. August 1980. [cited 2023-04-30]. DOI: 10.17487/RFC768. Available at: https://datatracker.ietf.org/doc/html/rfc768
 
-[RFC768] Postel, J. User Datagram Protocol [online]. August 1980. [cited 2023-04-30]. DOI: 10.17487/RFC768. Available at: https://datatracker.ietf.org/doc/html/rfc768
-
-[RFC793] Postel, J. Transmission Control Protocol [online]. September 1981. [cited 2023-04-30]. DOI: 10.17487/RFC793. Available at: https://datatracker.ietf.org/doc/html/rfc793
+[RFC793]: Postel, J. Transmission Control Protocol [online]. September 1981. [cited 2023-04-30]. DOI: 10.17487/RFC793. Available at: https://datatracker.ietf.org/doc/html/rfc793
 
