@@ -20,6 +20,6 @@ public static class Logger
             ErrMessage => "ERR",
             _ => "Unknown"
         };
-        Console.WriteLine($"{direction} {endPoint} | {type} | {message.Type}");
+        Console.WriteLine($"{direction} {endPoint} | {type}");
     }
 }
