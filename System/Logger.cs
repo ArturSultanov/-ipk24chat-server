@@ -17,8 +17,9 @@ public static class Logger
             ConfirmMessage => "CONFIRM",
             ReplyMessage => "REPLY",
             ByeMessage => "BYE",
+            ErrMessage => "ERR",
             _ => "Unknown"
         };
-        Console.WriteLine($"{direction} {endPoint} | {type}");
+        Console.WriteLine($"{direction} {endPoint} | {type} | {message.Type}");
     }
 }
