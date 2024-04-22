@@ -10,6 +10,8 @@ internal class Program
 {
     public static async Task Main(string[] args)
     {
+        List<Task> runningTasks = new List<Task>(); // To keep track of all running tasks
+
         CancellationTokenSource cts = new CancellationTokenSource();
         TcpServer? tcpServer = null;
         UdpServer? udpServer = null;
@@ -29,14 +31,18 @@ internal class Program
             {
                 e.Cancel = true;
                 cts.Cancel();
+                ChatMessagesQueue.Queue.Dispose();
             };
+            
+            // Start all tasks
+            runningTasks.Add(Task.Run(() => userInputHandlernew.StartListeningForCommandsAsync(cts.Token, () => cts.Cancel())));
+            runningTasks.Add(messageProcessor.ProcessMessagesAsync(cts.Token));
+            runningTasks.Add(Task.Run(() => chatMessagePrinter.PrintMessagesAsync(cts.Token)));
+            runningTasks.Add(tcpServer.StartTcpServerAsync(cts.Token, () => cts.Cancel()));
+            runningTasks.Add(udpServer.StartUdpServerAsync(cts.Token));
 
-            Task _ = Task.Run(() => userInputHandlernew.StartListeningForCommandsAsync(cts.Token, () => cts.Cancel()));
-            Task messageProcessorTask = messageProcessor.ProcessMessagesAsync(cts.Token);
-            Task chatMessagePrinterTask = chatMessagePrinter.PrintMessagesAsync(cts.Token);
-            Task tcpServerTask = tcpServer.StartTcpServerAsync(cts.Token, () => cts.Cancel());
-            Task udpServerTask = udpServer.StartUdpServerAsync(cts.Token);
-            await Task.WhenAll(tcpServerTask, udpServerTask, messageProcessorTask, chatMessagePrinterTask);
+            // Await all tasks to complete
+            await Task.WhenAll(runningTasks);
         }
         catch (ArgumentException ex)
         {

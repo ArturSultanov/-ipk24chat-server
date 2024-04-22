@@ -15,16 +15,19 @@ public class ChatMessagePrinter
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                var message = ChatMessagesQueue.Queue.Take(cancellationToken);
-                await PrintMessageToChat(message);
+                if (ChatMessagesQueue.Queue.TryTake(out var message, Timeout.Infinite, cancellationToken)) // waits up to 1 second
+                {
+                    await PrintMessageToChat(message);
+                }
             }
         }
         finally
         {
-            // Release resources
+            // Clean up resources if needed
             ChatMessagesQueue.Queue.Dispose();
         }
     }
+
 
     private async Task PrintMessageToChat(ChatMessage message)
     {
