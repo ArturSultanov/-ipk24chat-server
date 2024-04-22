@@ -307,7 +307,6 @@ This client allows for simulation of both TCP and UDP communications, providing 
 
 ```
 [xsulta01@ipk24 ~/test-client/ipk24chat-client]$ ./ipk24chat-client -t tcp -s localhost
-Enter commands:
 /auth user1 User1 secret 
 Success: Successfully authenticated
 Hello World!
@@ -334,7 +333,6 @@ SENT 127.0.0.1:35716 | MSG
 
 ```
 [xsulta01@ipk24 ~/test-client/ipk24chat-client]$ ./ipk24chat-client -t udp -s localhost
-Enter commands:
 /auth user2 User2 secret 
 Success: Successfully authenticated
 Hello World!
@@ -367,7 +365,6 @@ RECV 127.0.0.1:37062 | CONFIRM
 
 ```
 [xsulta01@ipk24 ~/test-client/ipk24chat-client]$ ./ipk24chat-client -t tcp -s localhost
-Enter commands:
 /auth user1 password User1_Tom
 Success: Successfully authenticated
 Server: User2_Sam has joined default
@@ -379,7 +376,6 @@ User2_Sam: Hi, Tom! I'am testing chat-server.
 
 ```
 [xsulta01@ipk24 ~/test-client/ipk24chat-client]$ ./ipk24chat-client -t udp -s localhost
-Enter commands:
 /auth user2 12345678 User2_Sam
 Success: Successfully authenticated
 User1_Tom: Hi, Sam! How are you doing!
