@@ -248,51 +248,23 @@ The following diagram illustrates the relationships between the classes in the I
 - **Responsibilities**: Corresponds to a UDP-connected client, facilitating stateless message sending and reception.
 - **Communication**: Inherits from `AbstractChatUser` and interfaces with `UdpPacker` for message handling.
 
+## Bibliography
 
+[NetworkProgramming.NET] "Network programming in .NET - .NET | Microsoft Learn." Microsoft. [Online]. Available at: https://learn.microsoft.com/en-us/dotnet/framework/network-programming.
 
+[StevensTCP]: Stevens, W. Richard. *TCP/IP Illustrated, Volume 1: The Protocols*. Addison-Wesley, 1994. [Online]. Available at: https://www.r-5.org/files/books/computers/internals/net/Richard_Stevens-TCP-IP_Illustrated-EN.pdf
 
+[TcpClientTcpListener] "Use TcpClient and TcpListener - .NET | Microsoft Learn." Microsoft. [Online]. Available at: https://learn.microsoft.com/en-us/dotnet/framework/network-programming/tcp-client-and-tcp-listener;.
 
+[UsingUDP] "Using UDP Services - .NET Framework | Microsoft Learn." Microsoft. [Online]. Available at: https://learn.microsoft.com/en-us/dotnet/framework/network-programming/using-udp-services.
 
+[UdpClientClass] "UdpClient Class (System.Net.Sockets) | Microsoft Learn." Microsoft. [Online]. Available at: https://learn.microsoft.com/en-us/dotnet/api/system.net.sockets.udpclient?view=netframework-4.8;.
 
+[MicrosoftDocs] Microsoft. TCP/IP Client and Server [online]. Microsoft Docs. [cited 2023-04-30]. Available at: https://docs.microsoft.com/en-us/dotnet/framework/network-programming/tcp-ip-client-and-server
 
+[MicrosoftDocs] Microsoft. Using UDP Services [online]. Microsoft Docs. [cited 2023-04-30]. Available at: https://docs.microsoft.com/en-us/dotnet/framework/network-programming/using-udp-services
 
+[RFC768] Postel, J. User Datagram Protocol [online]. August 1980. [cited 2023-04-30]. DOI: 10.17487/RFC768. Available at: https://datatracker.ietf.org/doc/html/rfc768
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+[RFC793] Postel, J. Transmission Control Protocol [online]. September 1981. [cited 2023-04-30]. DOI: 10.17487/RFC793. Available at: https://datatracker.ietf.org/doc/html/rfc793
 
