@@ -11,10 +11,12 @@ public static class Logger
     {
         string type = message switch
         {
-            AuthMessage => "Auth",
-            JoinMessage => "Join",
-            MsgMessage => "Msg",
-            ConfirmMessage => "Confirm",
+            AuthMessage => "AUTH",
+            JoinMessage => "JOIN",
+            MsgMessage => "MSG",
+            ConfirmMessage => "CONFIRM",
+            ReplyMessage => "REPLY",
+            ByeMessage => "BYE",
             _ => "Unknown"
         };
         Console.WriteLine($"{direction} {endPoint} | {type}");
