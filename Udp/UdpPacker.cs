@@ -119,7 +119,13 @@ public class UdpPacker
 
                 case ChatProtocol.MessageType.Err:
                     return ParseErrMessage(reader, messageId);
-
+                
+                case ChatProtocol.MessageType.Bye:
+                    return ParseByeMessage(messageId);
+                
+                case ChatProtocol.MessageType.Join:
+                    return ParseJoinMessage(reader, messageId);
+                
                 default:
                     return new UnknownMessage();
                 //throw new NotSupportedException($"Unsupported message type: {type}");
@@ -165,6 +171,23 @@ public class UdpPacker
             return new UnknownMessage(); // Invalid AuthMessage due to missing or excessively long fields
         }
         return new ErrMessage(displayName, messageContent) { MessageId = messageId };
+    }
+    
+    private static ClientMessage ParseJoinMessage(BinaryReader reader, ushort messageId)
+    {
+        var channelId = ReadString(reader, ChatProtocol.MaxChannelIdLength);
+        var displayName = ReadString(reader, ChatProtocol.MaxDisplayNameLength);
+        if (string.IsNullOrEmpty(channelId) || string.IsNullOrEmpty(displayName))
+        {
+            return new UnknownMessage(); // Return an error or unknown message type if validation fails
+        }
+        return new JoinMessage(channelId, displayName) { MessageId = messageId };
+    }
+
+    
+    private static ClientMessage ParseByeMessage(ushort messageId)
+    {
+        return new ByeMessage() { MessageId = messageId };
     }
     
     private static ushort ReadMessageId(BinaryReader reader)
