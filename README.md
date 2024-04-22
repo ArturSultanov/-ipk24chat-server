@@ -259,7 +259,7 @@ The following diagram illustrates the relationships between the classes in the I
 
 To verify that the server is operational and accepting connections, the `telnet` command was used:
 
-```bash
+```
 [xsulta01@ipk24 ~/test-client/ipk24chat-client]$ telnet 0.0.0.0 4567
 Trying 0.0.0.0...
 Connected to 0.0.0.0.
@@ -305,7 +305,7 @@ This client allows for simulation of both TCP and UDP communications, providing 
 
 **The TCP-client input:**
 
-```bash
+```
 [xsulta01@ipk24 ~/test-client/ipk24chat-client]$ ./ipk24chat-client -t tcp -s localhost
 Enter commands:
 /auth user1 User1 secret 
@@ -318,7 +318,7 @@ Server: secret has joined 1
 
 **Server logs:**
 
-```bash
+```
 [xsulta01@ipk24 ~/RiderProjects/ipk24chat-server]$ ./ipk24chat-server 
 RECV 127.0.0.1:35716 | AUTH
 SENT 127.0.0.1:35716 | REPLY
@@ -332,7 +332,7 @@ SENT 127.0.0.1:35716 | MSG
 
 **The UDP-client input:**
 
-```bash
+```
 [xsulta01@ipk24 ~/test-client/ipk24chat-client]$ ./ipk24chat-client -t udp -s localhost
 Enter commands:
 /auth user2 User2 secret 
@@ -345,7 +345,7 @@ Server: secret has joined 1
 
 **Server logs:**
 
-```bash
+```
 [xsulta01@ipk24 ~/RiderProjects/ipk24chat-server]$ ./ipk24chat-server 
 SENT 127.0.0.1:37062 | CONFIRM
 RECV 127.0.0.1:37062 | AUTH
@@ -365,7 +365,7 @@ RECV 127.0.0.1:37062 | CONFIRM
 
 **The TCP-client input:**
 
-```bash
+```
 [xsulta01@ipk24 ~/test-client/ipk24chat-client]$ ./ipk24chat-client -t tcp -s localhost
 Enter commands:
 /auth user1 password User1_Tom
@@ -377,7 +377,7 @@ User2_Sam: Hi, Tom! I'am testing chat-server.
 
 **The UDP-client input:**
 
-```bash
+```
 [xsulta01@ipk24 ~/test-client/ipk24chat-client]$ ./ipk24chat-client -t udp -s localhost
 Enter commands:
 /auth user2 12345678 User2_Sam
@@ -388,7 +388,7 @@ Hi, Tom! I'am testing chat-server.
 
 **Server logs:**
 
-```bash
+```
 [xsulta01@ipk24 ~/RiderProjects/ipk24chat-server]$ ./ipk24chat-server 
 RECV 127.0.0.1:58976 | AUTH
 SENT 127.0.0.1:58976 | REPLY
@@ -409,7 +409,7 @@ SENT 127.0.0.1:58976 | MSG
 
 **The TCP-client input:**
 
-```bash
+```
 /join 1
 Success: Successfully joined 1.
 Server: User1_Tom has joined 1
@@ -419,7 +419,7 @@ Yeah, I am here
 ```
 **The UDP-client input:**
 
-```bash
+```
 Server: User1_Tom has left default
 Tom, did you leave the chanel?
 Okay :(
@@ -432,7 +432,7 @@ User1_Tom: Yeah, I am here
 
 **Server logs:**
 
-```bash
+```
 RECV 127.0.0.1:58976 | JOIN
 SENT 127.0.0.1:50161 | MSG
 SENT 127.0.0.1:58976 | REPLY
@@ -465,20 +465,20 @@ RECV 127.0.0.1:50161 | CONFIRM
 
 **The TCP-client input:**
 
-```bash
+```
 User2_Sam: Sorry, Sam, have a thing to do... Bye!
 Server: User2_Sam has left 1
 ```
 **The UDP-client input:**
 
-```bash
+```
 Sorry, Sam, have a thing to do... Bye!
 [xsulta01@ipk24 ~/test-client/ipk24chat-client]$ 
 ```
 
 **Server logs:**
 
-```bash
+```
 RECV 127.0.0.1:50161 | MSG
 SENT 127.0.0.1:50161 | CONFIRM
 SENT 127.0.0.1:58976 | MSG
