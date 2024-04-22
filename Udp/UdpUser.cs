@@ -15,8 +15,9 @@ namespace ipk24chat_server.Udp;
  */
 public class UdpUser : AbstractChatUser
 {
-    private readonly UdpClient _udpClient;
     public BlockingCollection<ConfirmMessage> ConfirmCollection = new BlockingCollection<ConfirmMessage>(10000);
+
+    private readonly UdpClient _udpClient;
     private ushort _lastSentMessageId;
     private ushort _lastReceivedMessageId;
     private readonly HashSet<ushort> _receivedMessageIds = new HashSet<ushort>(); // Tracks received message IDs to handle duplicates

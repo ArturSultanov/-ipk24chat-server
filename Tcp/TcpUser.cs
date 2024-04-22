@@ -74,7 +74,8 @@ public class TcpUser : AbstractChatUser
         return Task.CompletedTask;
     }
 
-    
+    // TCP does not require message IDs, so this method always returns null.
+    // The method is implemented to safe compatibility with the UDP messages in queue.
     public override ushort? GetMessageIdToSend()
     {
         return null;
