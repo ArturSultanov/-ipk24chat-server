@@ -158,36 +158,209 @@ The following diagram illustrates the relationships between the classes in the I
 ## Testing:
 
 ### Telnet Check:
+To check the server is running, I used the telnet command.
 
 ```bash
-[asultano@work 11:36:37 ~/RiderProjects/test-client/ipk24chat-client]$ telnet 0.0.0.0 4567
+[xsulta01@ipk24 ~/test-client/ipk24chat-client]$ telnet 0.0.0.0 4567
 Trying 0.0.0.0...
 Connected to 0.0.0.0.
 Escape character is '^]'.
 ```
+As we can see, the server is running and accepting connections.
 
-### One user TCP Connection user:
+### Wireshack Check:
+To check the server sends messages in the right `IPK24-CHAT` protocol format, I used the Wireshark tool.  
+I tested program using `/ipk24-chat.lua.` lua extension the was provided by Instructors.
+
+
+
+### Chat-client from project 1:
+
+Also for testing the server, I used the chat-client from project 1.
+In scenarios below I tried to demonstrate the TCP-client, UDP-client, and Server communication.
+
+#### One user TCP Connection user:
+
+The TCP-client input:
+
 ```bash
-[asultano@work 11:26:31 ~/RiderProjects/test-client/ipk24chat-client]$ ./ipk24chat-client -t tcp -s localhost
+[xsulta01@ipk24 ~/test-client/ipk24chat-client]$ ./ipk24chat-client -t tcp -s localhost
 Enter commands:
-/auth Artur xsulta01 xsulta01
+/auth user1 User1 secret 
 Success: Successfully authenticated
-hi
+Hello World!
 /join 1
 Success: Successfully joined 1.
-Server: xsulta01 has joined 1
+Server: secret has joined 1
 ```
+
+Server logs:
 
 ```bash
-[asultano@work 11:31:37 ~/RiderProjects/ipk24chat-server]$ ./ipk24chat-server 
-RECV 127.0.0.1:54576 | AUTH
-SENT 127.0.0.1:54576 | REPLY
-RECV 127.0.0.1:54576 | MSG
-RECV 127.0.0.1:54576 | JOIN
-SENT 127.0.0.1:54576 | REPLY
-SENT 127.0.0.1:54576 | MSG
+[xsulta01@ipk24 ~/RiderProjects/ipk24chat-server]$ ./ipk24chat-server 
+RECV 127.0.0.1:35716 | AUTH
+SENT 127.0.0.1:35716 | REPLY
+RECV 127.0.0.1:35716 | MSG
+RECV 127.0.0.1:35716 | JOIN
+SENT 127.0.0.1:35716 | REPLY
+SENT 127.0.0.1:35716 | MSG
 ```
 
+#### One user UDP Connection user:
+
+The UDP-client input:
+
+```bash
+[xsulta01@ipk24 ~/test-client/ipk24chat-client]$ ./ipk24chat-client -t udp -s localhost
+Enter commands:
+/auth user2 User2 secret 
+Success: Successfully authenticated
+Hello World!
+/join 1
+Success: Successfully joined 1.
+Server: secret has joined 1
+```
+
+Server logs:
+
+```bash
+[xsulta01@ipk24 ~/RiderProjects/ipk24chat-server]$ ./ipk24chat-server 
+SENT 127.0.0.1:37062 | CONFIRM
+RECV 127.0.0.1:37062 | AUTH
+SENT 127.0.0.1:37062 | REPLY
+RECV 127.0.0.1:37062 | CONFIRM
+RECV 127.0.0.1:37062 | MSG
+SENT 127.0.0.1:37062 | CONFIRM
+RECV 127.0.0.1:37062 | JOIN
+SENT 127.0.0.1:37062 | CONFIRM
+SENT 127.0.0.1:37062 | REPLY
+RECV 127.0.0.1:37062 | CONFIRM
+SENT 127.0.0.1:37062 | MSG
+RECV 127.0.0.1:37062 | CONFIRM
+```
+
+#### TCP and UDP clients communication:
+
+The TCP-client input:
+
+```bash
+[xsulta01@ipk24 ~/test-client/ipk24chat-client]$ ./ipk24chat-client -t tcp -s localhost
+Enter commands:
+/auth user1 password User1_Tom
+Success: Successfully authenticated
+Server: User2_Sam has joined default
+Hi, Sam! How are you doing!
+User2_Sam: Hi, Tom! I'am testing chat-server.
+```
+
+The UDP-client input:
+
+```bash
+[xsulta01@ipk24 ~/test-client/ipk24chat-client]$ ./ipk24chat-client -t udp -s localhost
+Enter commands:
+/auth user2 12345678 User2_Sam
+Success: Successfully authenticated
+User1_Tom: Hi, Sam! How are you doing!
+Hi, Tom! I'am testing chat-server.      
+```
+
+Server logs:
+
+```bash
+[xsulta01@ipk24 ~/RiderProjects/ipk24chat-server]$ ./ipk24chat-server 
+RECV 127.0.0.1:58976 | AUTH
+SENT 127.0.0.1:58976 | REPLY
+SENT 127.0.0.1:50161 | CONFIRM
+RECV 127.0.0.1:50161 | AUTH
+SENT 127.0.0.1:50161 | REPLY
+RECV 127.0.0.1:50161 | CONFIRM
+SENT 127.0.0.1:58976 | MSG
+RECV 127.0.0.1:58976 | MSG
+SENT 127.0.0.1:50161 | MSG
+RECV 127.0.0.1:50161 | CONFIRM
+RECV 127.0.0.1:50161 | MSG
+SENT 127.0.0.1:50161 | CONFIRM
+SENT 127.0.0.1:58976 | MSG
+```
+
+#### TCP and UDP clients communication in diffrent channels:
+The TCP-client input:
+
+```bash
+/join 1
+Success: Successfully joined 1.
+Server: User1_Tom has joined 1
+Server: User2_Sam has joined 1
+User2_Sam: Oh, hi Tom! Did know that you at the channel 1 :)
+Yeah, I am here
+```
+The UDP-client input:
+
+```bash
+Server: User1_Tom has left default
+Tom, did you leave the chanel?
+Okay :(
+/join 1
+Success: Successfully joined 1.
+Server: User2_Sam has joined 1
+Oh, hi Tom! Did know that you at the channel 1 :)
+User1_Tom: Yeah, I am here
+```
+
+Server logs:
+
+```bash
+RECV 127.0.0.1:58976 | JOIN
+SENT 127.0.0.1:50161 | MSG
+SENT 127.0.0.1:58976 | REPLY
+RECV 127.0.0.1:50161 | CONFIRM
+SENT 127.0.0.1:58976 | MSG
+RECV 127.0.0.1:50161 | MSG
+SENT 127.0.0.1:50161 | CONFIRM
+RECV 127.0.0.1:50161 | MSG
+SENT 127.0.0.1:50161 | CONFIRM
+RECV 127.0.0.1:50161 | JOIN
+SENT 127.0.0.1:50161 | CONFIRM
+SENT 127.0.0.1:50161 | MSG
+SENT 127.0.0.1:50161 | REPLY
+RECV 127.0.0.1:50161 | CONFIRM
+SENT 127.0.0.1:50161 | MSG
+RECV 127.0.0.1:50161 | CONFIRM
+RECV 127.0.0.1:50161 | CONFIRM
+SENT 127.0.0.1:50161 | REPLY
+SENT 127.0.0.1:58976 | MSG
+RECV 127.0.0.1:50161 | CONFIRM
+RECV 127.0.0.1:50161 | MSG
+SENT 127.0.0.1:50161 | CONFIRM
+SENT 127.0.0.1:58976 | MSG
+RECV 127.0.0.1:58976 | MSG
+SENT 127.0.0.1:50161 | MSG
+RECV 127.0.0.1:50161 | CONFIRM
+```
+
+#### Handling of the user leaving::
+The TCP-client input:
+
+```bash
+User2_Sam: Sorry, Sam, have a thing to do... Bye!
+Server: User2_Sam has left 1
+```
+The UDP-client input:
+
+```bash
+Sorry, Sam, have a thing to do... Bye!
+[xsulta01@ipk24 ~/test-client/ipk24chat-client]$ 
+```
+
+Server logs:
+
+```bash
+RECV 127.0.0.1:50161 | MSG
+SENT 127.0.0.1:50161 | CONFIRM
+SENT 127.0.0.1:58976 | MSG
+RECV 127.0.0.1:50161 | BYE
+SENT 127.0.0.1:50161 | CONFIRM
+```
 
 ### Chat Namespace
 
