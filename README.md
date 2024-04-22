@@ -154,6 +154,41 @@ The following diagram illustrates the relationships between the classes in the I
 ![Class Diagram](./Diagrams/class.svg)
 
 
+
+## Testing:
+
+### Telnet Check:
+
+```bash
+[asultano@work 11:36:37 ~/RiderProjects/test-client/ipk24chat-client]$ telnet 0.0.0.0 4567
+Trying 0.0.0.0...
+Connected to 0.0.0.0.
+Escape character is '^]'.
+```
+
+### One user TCP Connection user:
+```bash
+[asultano@work 11:26:31 ~/RiderProjects/test-client/ipk24chat-client]$ ./ipk24chat-client -t tcp -s localhost
+Enter commands:
+/auth Artur xsulta01 xsulta01
+Success: Successfully authenticated
+hi
+/join 1
+Success: Successfully joined 1.
+Server: xsulta01 has joined 1
+```
+
+```bash
+[asultano@work 11:31:37 ~/RiderProjects/ipk24chat-server]$ ./ipk24chat-server 
+RECV 127.0.0.1:54576 | AUTH
+SENT 127.0.0.1:54576 | REPLY
+RECV 127.0.0.1:54576 | MSG
+RECV 127.0.0.1:54576 | JOIN
+SENT 127.0.0.1:54576 | REPLY
+SENT 127.0.0.1:54576 | MSG
+```
+
+
 ### Chat Namespace
 
 #### `AbstractChatUser`

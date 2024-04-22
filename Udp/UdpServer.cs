@@ -73,6 +73,7 @@ public class UdpServer
             {
                 byte[] confirmMessage = { 0x00, result.Buffer[1], result.Buffer[2] };
                 await _welcomeClient.SendAsync(confirmMessage, confirmMessage.Length, result.RemoteEndPoint);
+                Logger.LogIo("SENT", result.RemoteEndPoint.ToString(), UdpPacker.Unpack(confirmMessage));
             }
 
             ClientMessage clientMessage = UdpPacker.Unpack(result.Buffer);
@@ -133,16 +134,32 @@ public class UdpServer
                 continue;
             }
 
+
+
+            ClientMessage clientMessage = UdpPacker.Unpack(result.Buffer);
+            Logger.LogIo("RECV", result.RemoteEndPoint.ToString(), clientMessage);
+            
             // Send a confirmation for non-confirm messages
-            if (result.Buffer[0] != ChatProtocol.MessageType.Confirm)
+            if (clientMessage is not ConfirmMessage)
             {
                 byte[] confirmMessage = { ChatProtocol.MessageType.Confirm, result.Buffer[1], result.Buffer[2] };
                 await _communicationClient.SendAsync(confirmMessage, confirmMessage.Length, result.RemoteEndPoint);
                 Logger.LogIo("SENT", result.RemoteEndPoint.ToString(), UdpPacker.Unpack(confirmMessage));
             }
-
-            ClientMessage clientMessage = UdpPacker.Unpack(result.Buffer);
-            Logger.LogIo("RECV", result.RemoteEndPoint.ToString(), clientMessage);
+            
+            // if (clientMessage is not ConfirmMessage) // If it's not a confirm message
+            // {
+            //     Console.WriteLine("Sending confirm message");
+            //     // Construct and send a confirm response
+            //     byte[] confirmMessage = new byte[3];
+            //     confirmMessage[0] = 0x00; // Confirm message type
+            //     confirmMessage[1] = result.Buffer[1]; // Copy the second byte from the received message
+            //     confirmMessage[2] = result.Buffer[2]; // Copy the third byte from the received message
+            //         
+            //     _communicationClient.Client.SendTo(confirmMessage, SocketFlags.None, result.RemoteEndPoint);
+            //     Logger.LogIo("SENT", result.RemoteEndPoint.ToString(), UdpPacker.Unpack(confirmMessage));
+            // }
+            
             AbstractChatUser? user;
 
             if (ConnectedUsers.TryGetUser(result.RemoteEndPoint, out user) && user is UdpUser udpUser)
@@ -150,6 +167,7 @@ public class UdpServer
                 if (clientMessage.Type == ChatProtocol.MessageType.Confirm)
                 {
                     udpUser.ConfirmCollection.Add(new ConfirmMessage((ushort)clientMessage.MessageId!));
+                    continue;
                 }
                 else
                 {
